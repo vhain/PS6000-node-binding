@@ -23,25 +23,14 @@ typedef struct _WORK
 	uint32_t param1;
 	uint32_t param2;
 	PICO_STATUS psStatus;
+  int8_t *data;
+  int32_t length;
 } WORK;
 
 static PicoScope *ppsMainObject = NULL;
 PICOSCOPE_OPTION psOption;
 
 #define PICO_UNKNOWN_ERROR			0xFFFFFFFFUL
-
-void parseOption(v8::Local<v8::Value> options)
-{
-	psOption.lfFullScale = Nan::Get(options, Nan::New<v8::String>("verticalScale").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
-	psOption.lfOffset = Nan::Get(options, Nan::New<v8::String>("verticalOffset").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
-	psOption.lfSamplerate = Nan::Get(options, Nan::New<v8::String>("horizontalSamplerate").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
-	psOption.lfDelayTime = Nan::Get(options, Nan::New<v8::String>("triggerDelay").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
-	psOption.nCoupling = Nan::Get(options, Nan::New<v8::String>("verticalCoupling").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-	psOption.nBandwidth = Nan::Get(options, Nan::New<v8::String>("verticalBandwidth").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-	psOption.nSamples = Nan::Get(options, Nan::New<v8::String>("horizontalSamples").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-	psOption.nSegments = Nan::Get(options, Nan::New<v8::String>("horizontalSegments").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-	psOption.nChannel = Nan::Get(options, Nan::New<v8::String>("channel").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-}
 
 void postOperation(uv_work_t* ptr)
 {
@@ -140,7 +129,16 @@ void openPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 	if (bOption)
 	{
 		// Get options
-		parseOption(args[1]->ToObject());
+    v8::Local<v8::Value> options = args[1]->ToObject();
+    psOption.lfFullScale = Nan::Get(options, Nan::New<v8::String>("verticalScale").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+    psOption.lfOffset = Nan::Get(options, Nan::New<v8::String>("verticalOffset").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+    psOption.lfSamplerate = Nan::Get(options, Nan::New<v8::String>("horizontalSamplerate").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+    psOption.lfDelayTime = Nan::Get(options, Nan::New<v8::String>("triggerDelay").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+    psOption.nCoupling = Nan::Get(options, Nan::New<v8::String>("verticalCoupling").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+    psOption.nBandwidth = Nan::Get(options, Nan::New<v8::String>("verticalBandwidth").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+    psOption.nSamples = Nan::Get(options, Nan::New<v8::String>("horizontalSamples").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+    psOption.nSegments = Nan::Get(options, Nan::New<v8::String>("horizontalSegments").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+    psOption.nChannel = Nan::Get(options, Nan::New<v8::String>("channel").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
 	}
 
 	// Assign work to libuv queue
@@ -233,7 +231,16 @@ void setOption(const Nan::FunctionCallbackInfo<v8::Value>& args)
 	}
 
 	// Parse options
-	parseOption(args[0]->ToObject());
+  v8::Local<v8::Value> options = args[1]->ToObject();
+  psOption.lfFullScale = Nan::Get(options, Nan::New<v8::String>("verticalScale").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+  psOption.lfOffset = Nan::Get(options, Nan::New<v8::String>("verticalOffset").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+  psOption.lfSamplerate = Nan::Get(options, Nan::New<v8::String>("horizontalSamplerate").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+  psOption.lfDelayTime = Nan::Get(options, Nan::New<v8::String>("triggerDelay").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+  psOption.nCoupling = Nan::Get(options, Nan::New<v8::String>("verticalCoupling").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+  psOption.nBandwidth = Nan::Get(options, Nan::New<v8::String>("verticalBandwidth").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+  psOption.nSamples = Nan::Get(options, Nan::New<v8::String>("horizontalSamples").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+  psOption.nSegments = Nan::Get(options, Nan::New<v8::String>("horizontalSegments").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+  psOption.nChannel = Nan::Get(options, Nan::New<v8::String>("channel").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
 
 	// Apply
 	if (ppsMainObject)
@@ -309,9 +316,148 @@ void setDigitizerPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
   uv_queue_work(uv_default_loop(), pUVWork, setDigitizerWork, (uv_after_work_cb)postOperation);
 }
 
+void doAcquisitionWork(uv_work_t *ptr)
+{
+  PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
+  WORK *pWork = (WORK *)ptr->data;
+
+  if (ppsMainObject)
+  {
+    psStatus = ppsMainObject->doAcquisition(pWork->param1);
+  }
+
+  pWork->psStatus = psStatus;
+}
+
 /**
  * @desc Do acquisition
+ * @param[in] callback:
+ * @param[in] bIsSAR:
  */
+void doAcquisitionPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
+{
+  if (args.Length() != 2)
+  {
+    Nan::ThrowTypeError("Wrong number of arguments");
+
+    return;
+  }
+
+  // Callback
+  if (!args[0]->IsFunction())
+  {
+    Nan::ThrowTypeError("Argument 1 should be a function");
+
+    return;
+  }
+
+  // boolean
+  if (!args[1]->IsBoolean())
+  {
+    Nan::ThrowTypeError("Argument 2 should be a boolean");
+
+    return;
+  }
+
+  v8::Local<v8::Function> callback = args[0].As<v8::Function>();
+
+  // Assign work to libuv queue
+  WORK *pWork;
+  uv_work_t *pUVWork;
+
+  pWork = (WORK *)calloc(1, sizeof(WORK));
+  pUVWork = new uv_work_t();
+
+  pUVWork->data = pWork;
+  pWork->callback = new Nan::Callback(callback);
+  pWork->param1 = args[1]->ToBoolean()->BooleanValue();
+
+  uv_queue_work(uv_default_loop(), pUVWork, doAcquisitionWork, (uv_after_work_cb)postOperation);
+}
+
+void fetchDataPost(uv_work_t *ptr)
+{
+  WORK *pWork = (WORK *)ptr->data;
+  Nan::HandleScope scope;
+  const int ret_count = 2;
+  v8::Local<v8::Value> ret[ret_count];
+
+  // Insert value
+  ret[0] = Nan::New<v8::Int32>(pWork->psStatus);
+  ret[1] = Nan::NewBuffer((char *)pWork->data, pWork->length).ToLocalChecked();
+
+  // Return callback
+  pWork->callback->Call(ret_count, ret);
+
+  // Free Work
+  free(pWork);
+  delete ptr;
+}
+
+void fetchDataWork(uv_work_t *ptr)
+{
+  PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
+  WORK *pWork = (WORK *)ptr->data;
+
+  if (ppsMainObject)
+  {
+    psStatus = ppsMainObject->fetchData(pWork->param1);
+
+    if (psStatus == PICO_OK)
+    {
+      pWork->data = ppsMainObject->getData();
+      pWork->length = ppsMainObject->getBufferLength();
+    }
+  }
+
+  pWork->psStatus = psStatus;
+}
+
+/**
+ * @desc Fetch data from PicoScope
+ * @param[in] callback:
+ * @param[in] bIsSAR:
+ */
+void fetchDataPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
+{
+  if (args.Length() != 2)
+  {
+    Nan::ThrowTypeError("Wrong number of arguments");
+
+    return;
+  }
+
+  // Callback
+  if (!args[0]->IsFunction())
+  {
+    Nan::ThrowTypeError("Argument 1 should be a function");
+
+    return;
+  }
+
+  // boolean
+  if (!args[1]->IsBoolean())
+  {
+    Nan::ThrowTypeError("Argument 2 should be a boolean");
+
+    return;
+  }
+
+  v8::Local<v8::Function> callback = args[0].As<v8::Function>();
+
+  // Assign work to libuv queue
+  WORK *pWork;
+  uv_work_t *pUVWork;
+
+  pWork = (WORK *)calloc(1, sizeof(WORK));
+  pUVWork = new uv_work_t();
+
+  pUVWork->data = pWork;
+  pWork->callback = new Nan::Callback(callback);
+  pWork->param1 = args[1]->ToBoolean()->BooleanValue();
+
+  uv_queue_work(uv_default_loop(), pUVWork, fetchDataWork, (uv_after_work_cb)fetchDataPost);
+}
 
 void Init(v8::Local<v8::Object> module)
 {
@@ -319,6 +465,8 @@ void Init(v8::Local<v8::Object> module)
 	Nan::SetMethod(module, "close", closePre);
 	Nan::SetMethod(module, "setOption", setOption);
   Nan::SetMethod(module, "setDigitizer", setDigitizerPre);
+  Nan::SetMethod(module, "doAcquisition", doAcquisitionPre);
+  Nan::SetMethod(module, "fetchData", fetchDataPre);
 }
 
 NODE_MODULE(node_ps6000, Init);
