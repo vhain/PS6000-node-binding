@@ -24,6 +24,7 @@
     "node_no_browser_globals": "false",
     "node_prefix": "/usr/local",
     "node_release_urlbase": "",
+    "node_shared_cares": "false",
     "node_shared_http_parser": "false",
     "node_shared_libuv": "false",
     "node_shared_openssl": "false",
@@ -44,7 +45,7 @@
     "v8_random_seed": 0,
     "v8_use_snapshot": "true",
     "want_separate_host_toolset": 0,
-    "nodedir": "C:\\Users\\kukdh1\\.node-gyp\\5.10.1",
+    "nodedir": "C:\\Users\\kukdh1\\.node-gyp\\6.0.0",
     "copy_dev_lib": "true",
     "standalone_static_library": 1
   }

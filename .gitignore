@@ -3,3 +3,6 @@ Release/
 Debug/
 *.sdf
 .vs/
+*.db
+*.lib
+*.dll
