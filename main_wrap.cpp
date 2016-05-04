@@ -223,7 +223,7 @@ void closePre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 	pUVWork->data = pWork;
 	pWork->callback = new Nan::Callback(callback);
 
-	uv_queue_work(uv_default_loop(), pUVWork, openWork, (uv_after_work_cb)openPost);
+	uv_queue_work(uv_default_loop(), pUVWork, closeWork, (uv_after_work_cb)closePost);
 }
 
 void Init(v8::Local<v8::Object> module)
