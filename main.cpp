@@ -618,6 +618,6 @@ void PicoScope::doTriggerSet(UNIT *unit)
 
   uint32_t nDelayCount = int(lfDelayTime * (lfAcquisitionRate * 1e9));
 
-  //setTrigger(unit->handle, &sourceDetails, 1, &conditions, 1, &directions, &pulseWidth, nDelayCount, 0, 0);
-  setTrigger(unit->handle, &sourceDetails, 1, &conditions, 1, &directions, &pulseWidth, nDelayCount, 0, 1000);
+  setTrigger(unit->handle, &sourceDetails, 1, &conditions, 1, &directions, &pulseWidth, nDelayCount, 0, 0);
+  //setTrigger(unit->handle, &sourceDetails, 1, &conditions, 1, &directions, &pulseWidth, nDelayCount, 0, 1000);
 }
