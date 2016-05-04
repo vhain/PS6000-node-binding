@@ -1,0 +1,27 @@
+{
+  "name": "node-ps6000",
+  "version": "0.1.0",
+  "description": "Node binding of PicoScope 6000 series.",
+  "main": "./build/Release/node-ps6000",
+  "binary": {
+    "module_name": "node-ps6000",
+    "module_path": "build/{configuration}/",
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://kukdh1@github.com/kukdh1/PS6000-node-binding.git"
+  },
+  "author": "Donghyun Gouk <kukdh1@gmail.com> (https://github.com/kukdh1)",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/kukdh1/PS6000-node-binding/issues"
+  },
+  "homepage": "https://github.com/kukdh1/PS6000-node-binding#readme",
+  "dependencies": {
+    "nan": "^2.3.3",
+    "node-gyp": "^3.3.1"
+  }
+}
