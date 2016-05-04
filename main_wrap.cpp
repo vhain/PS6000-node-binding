@@ -6,23 +6,23 @@
 
 typedef struct _PICOSCOPE_OPTION
 {
-	double lfFullScale;
-	double lfOffset;
-	double lfSamplerate;
-	double lfDelayTime;
-	int32_t nCoupling;
-	int32_t nBandwidth;
-	int32_t nSamples;
-	int32_t nSegments;
-	int32_t nChannel;
+  double lfFullScale;
+  double lfOffset;
+  double lfSamplerate;
+  double lfDelayTime;
+  int32_t nCoupling;
+  int32_t nBandwidth;
+  int32_t nSamples;
+  int32_t nSegments;
+  int32_t nChannel;
 } PICOSCOPE_OPTION;
 
 typedef struct _WORK
 {
-	Nan::Callback *callback;
-	uint32_t param1;
-	uint32_t param2;
-	PICO_STATUS psStatus;
+  Nan::Callback *callback;
+  uint32_t param1;
+  uint32_t param2;
+  PICO_STATUS psStatus;
   int8_t *data;
   int32_t length;
 } WORK;
@@ -30,7 +30,7 @@ typedef struct _WORK
 static PicoScope *ppsMainObject = NULL;
 PICOSCOPE_OPTION psOption;
 
-#define PICO_UNKNOWN_ERROR			0xFFFFFFFFUL
+#define PICO_UNKNOWN_ERROR      0xFFFFFFFFUL
 
 void parseOptions(v8::Local<v8::Object> options)
 {
@@ -47,45 +47,45 @@ void parseOptions(v8::Local<v8::Object> options)
 
 void postOperation(uv_work_t* ptr)
 {
-	WORK *pWork = (WORK *)ptr->data;
-	Nan::HandleScope scope;
-	const int ret_count = 1;
-	v8::Local<v8::Value> ret[ret_count];
+  WORK *pWork = (WORK *)ptr->data;
+  Nan::HandleScope scope;
+  const int ret_count = 1;
+  v8::Local<v8::Value> ret[ret_count];
 
-	// Insert value
-	ret[0] = Nan::New<v8::Int32>(pWork->psStatus);
+  // Insert value
+  ret[0] = Nan::New<v8::Int32>(pWork->psStatus);
 
-	// Return callback
-	pWork->callback->Call(ret_count, ret);
+  // Return callback
+  pWork->callback->Call(ret_count, ret);
 
-	// Free Work
-	free(pWork);
-	delete ptr;
+  // Free Work
+  free(pWork);
+  delete ptr;
 }
 
 void openWork(uv_work_t* ptr)
 {
-	PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
-	WORK *pWork = (WORK *)ptr->data;
+  PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
+  WORK *pWork = (WORK *)ptr->data;
 
-	// Create PicoScope object
-	ppsMainObject = new PicoScope();
+  // Create PicoScope object
+  ppsMainObject = new PicoScope();
 
-	if (ppsMainObject)
-	{
-		// Open PicoScope
-		psStatus = ppsMainObject->open();
+  if (ppsMainObject)
+  {
+    // Open PicoScope
+    psStatus = ppsMainObject->open();
 
-		if (pWork->param1)
-		{
-			ppsMainObject->setConfigVertical(psOption.lfFullScale, psOption.lfOffset, psOption.nCoupling, psOption.nBandwidth);
-			ppsMainObject->setConfigHorizontal(psOption.lfSamplerate, psOption.nSamples, psOption.nSegments);
-			ppsMainObject->setConfigTrigger(psOption.lfDelayTime);
-			ppsMainObject->setConfigChannel(psOption.nChannel);
-		}
-	}
+    if (pWork->param1)
+    {
+      ppsMainObject->setConfigVertical(psOption.lfFullScale, psOption.lfOffset, psOption.nCoupling, psOption.nBandwidth);
+      ppsMainObject->setConfigHorizontal(psOption.lfSamplerate, psOption.nSamples, psOption.nSegments);
+      ppsMainObject->setConfigTrigger(psOption.lfDelayTime);
+      ppsMainObject->setConfigChannel(psOption.nChannel);
+    }
+  }
 
-	pWork->psStatus = psStatus;
+  pWork->psStatus = psStatus;
 }
 
 /**
@@ -107,71 +107,71 @@ void openWork(uv_work_t* ptr)
  */
 void openPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
-	bool bOption = false;
+  bool bOption = false;
 
-	if (args.Length() > 2 || args.Length() < 1)
-	{
-		Nan::ThrowTypeError("Wrong number of arguments");
+  if (args.Length() > 2 || args.Length() < 1)
+  {
+    Nan::ThrowTypeError("Wrong number of arguments");
 
-		return;
-	}
+    return;
+  }
 
-	// Callback
-	if (!args[0]->IsFunction())
-	{
-		Nan::ThrowTypeError("Argument 1 should be a function");
+  // Callback
+  if (!args[0]->IsFunction())
+  {
+    Nan::ThrowTypeError("Argument 1 should be a function");
 
-		return;
-	}
+    return;
+  }
 
-	// JSON options
-	if (args.Length() == 2)
-	{
-		if (!args[1]->IsObject())
-		{
-			Nan::ThrowTypeError("Argument 2 should be an Object");
+  // JSON options
+  if (args.Length() == 2)
+  {
+    if (!args[1]->IsObject())
+    {
+      Nan::ThrowTypeError("Argument 2 should be an Object");
 
-			return;
-		}
+      return;
+    }
 
-		bOption = true;
-	}
+    bOption = true;
+  }
 
-	v8::Local<v8::Function> callback = args[0].As<v8::Function>();
+  v8::Local<v8::Function> callback = args[0].As<v8::Function>();
 
-	if (bOption)
-	{
-		// Get options
+  if (bOption)
+  {
+    // Get options
     parseOptions(args[1]->ToObject());
-	}
+  }
 
-	// Assign work to libuv queue
-	WORK *pWork;
-	uv_work_t *pUVWork;
+  // Assign work to libuv queue
+  WORK *pWork;
+  uv_work_t *pUVWork;
 
-	pWork = (WORK *)calloc(1, sizeof(WORK));
-	pUVWork = new uv_work_t();
+  pWork = (WORK *)calloc(1, sizeof(WORK));
+  pUVWork = new uv_work_t();
 
-	pUVWork->data = pWork;
-	pWork->callback = new Nan::Callback(callback);
-	pWork->param1 = bOption;
+  pUVWork->data = pWork;
+  pWork->callback = new Nan::Callback(callback);
+  pWork->param1 = bOption;
 
-	uv_queue_work(uv_default_loop(), pUVWork, openWork, (uv_after_work_cb)postOperation);
+  uv_queue_work(uv_default_loop(), pUVWork, openWork, (uv_after_work_cb)postOperation);
 }
 
 void closeWork(uv_work_t *ptr)
 {
-	PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
-	WORK *pWork = (WORK *)ptr->data;
+  PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
+  WORK *pWork = (WORK *)ptr->data;
 
-	if (ppsMainObject)
-	{
-		psStatus = ppsMainObject->close();
-		delete ppsMainObject;
-		ppsMainObject = NULL;
-	}
+  if (ppsMainObject)
+  {
+    psStatus = ppsMainObject->close();
+    delete ppsMainObject;
+    ppsMainObject = NULL;
+  }
 
-	pWork->psStatus = psStatus;
+  pWork->psStatus = psStatus;
 }
 
 /**
@@ -180,34 +180,34 @@ void closeWork(uv_work_t *ptr)
  */
 void closePre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
-	if (args.Length() != 1)
-	{
-		Nan::ThrowTypeError("Wrong number of arguments");
+  if (args.Length() != 1)
+  {
+    Nan::ThrowTypeError("Wrong number of arguments");
 
-		return;
-	}
+    return;
+  }
 
-	// Callback
-	if (!args[0]->IsFunction())
-	{
-		Nan::ThrowTypeError("Argument 1 should be a function");
+  // Callback
+  if (!args[0]->IsFunction())
+  {
+    Nan::ThrowTypeError("Argument 1 should be a function");
 
-		return;
-	}
+    return;
+  }
 
-	v8::Local<v8::Function> callback = args[0].As<v8::Function>();
+  v8::Local<v8::Function> callback = args[0].As<v8::Function>();
 
-	// Assign work to libuv queue
-	WORK *pWork;
-	uv_work_t *pUVWork;
+  // Assign work to libuv queue
+  WORK *pWork;
+  uv_work_t *pUVWork;
 
-	pWork = (WORK *)calloc(1, sizeof(WORK));
-	pUVWork = new uv_work_t();
+  pWork = (WORK *)calloc(1, sizeof(WORK));
+  pUVWork = new uv_work_t();
 
-	pUVWork->data = pWork;
-	pWork->callback = new Nan::Callback(callback);
+  pUVWork->data = pWork;
+  pWork->callback = new Nan::Callback(callback);
 
-	uv_queue_work(uv_default_loop(), pUVWork, closeWork, (uv_after_work_cb)postOperation);
+  uv_queue_work(uv_default_loop(), pUVWork, closeWork, (uv_after_work_cb)postOperation);
 }
 
 /**
@@ -216,40 +216,40 @@ void closePre(const Nan::FunctionCallbackInfo<v8::Value>& args)
  */
 void setOption(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
-	PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
+  PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
 
-	// Options
-	if (args.Length() != 1)
-	{
-		Nan::ThrowTypeError("Wrong number of arguments");
+  // Options
+  if (args.Length() != 1)
+  {
+    Nan::ThrowTypeError("Wrong number of arguments");
 
-		return;
-	}
+    return;
+  }
 
-	// JSON options
-	if (!args[0]->IsObject())
-	{
-		Nan::ThrowTypeError("Argument 1 should be an Object");
+  // JSON options
+  if (!args[0]->IsObject())
+  {
+    Nan::ThrowTypeError("Argument 1 should be an Object");
 
-		return;
-	}
+    return;
+  }
 
-	// Parse options
+  // Parse options
   parseOptions(args[1]->ToObject());
 
-	// Apply
-	if (ppsMainObject)
-	{
-		ppsMainObject->setConfigVertical(psOption.lfFullScale, psOption.lfOffset, psOption.nCoupling, psOption.nBandwidth);
-		ppsMainObject->setConfigHorizontal(psOption.lfSamplerate, psOption.nSamples, psOption.nSegments);
-		ppsMainObject->setConfigTrigger(psOption.lfDelayTime);
-		ppsMainObject->setConfigChannel(psOption.nChannel);
+  // Apply
+  if (ppsMainObject)
+  {
+    ppsMainObject->setConfigVertical(psOption.lfFullScale, psOption.lfOffset, psOption.nCoupling, psOption.nBandwidth);
+    ppsMainObject->setConfigHorizontal(psOption.lfSamplerate, psOption.nSamples, psOption.nSegments);
+    ppsMainObject->setConfigTrigger(psOption.lfDelayTime);
+    ppsMainObject->setConfigChannel(psOption.nChannel);
 
-		psStatus = PICO_OK;
-	}
+    psStatus = PICO_OK;
+  }
 
-	// Return
-	args.GetReturnValue().Set(Nan::New<v8::Int32>(psStatus));
+  // Return
+  args.GetReturnValue().Set(Nan::New<v8::Int32>(psStatus));
 }
 
 void setDigitizerWork(uv_work_t *ptr)
@@ -272,28 +272,28 @@ void setDigitizerWork(uv_work_t *ptr)
  */
 void setDigitizerPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
-	if (args.Length() != 2)
-	{
-		Nan::ThrowTypeError("Wrong number of arguments");
+  if (args.Length() != 2)
+  {
+    Nan::ThrowTypeError("Wrong number of arguments");
 
-		return;
-	}
+    return;
+  }
 
-	// Callback
-	if (!args[0]->IsFunction())
-	{
-		Nan::ThrowTypeError("Argument 1 should be a function");
+  // Callback
+  if (!args[0]->IsFunction())
+  {
+    Nan::ThrowTypeError("Argument 1 should be a function");
 
-		return;
-	}
+    return;
+  }
 
-	// boolean
-	if (!args[1]->IsBoolean())
-	{
-		Nan::ThrowTypeError("Argument 2 should be a boolean");
+  // boolean
+  if (!args[1]->IsBoolean())
+  {
+    Nan::ThrowTypeError("Argument 2 should be a boolean");
 
-		return;
-	}
+    return;
+  }
 
   v8::Local<v8::Function> callback = args[0].As<v8::Function>();
 
@@ -456,9 +456,9 @@ void fetchDataPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 
 void Init(v8::Local<v8::Object> module)
 {
-	Nan::SetMethod(module, "open", openPre);
-	Nan::SetMethod(module, "close", closePre);
-	Nan::SetMethod(module, "setOption", setOption);
+  Nan::SetMethod(module, "open", openPre);
+  Nan::SetMethod(module, "close", closePre);
+  Nan::SetMethod(module, "setOption", setOption);
   Nan::SetMethod(module, "setDigitizer", setDigitizerPre);
   Nan::SetMethod(module, "doAcquisition", doAcquisitionPre);
   Nan::SetMethod(module, "fetchData", fetchDataPre);
