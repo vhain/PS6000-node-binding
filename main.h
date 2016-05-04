@@ -4,22 +4,26 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
+
+#include <node.h>
+#include <v8.h>
+
 #include "picoStatus.h"
 #include "ps6000Api.h"
 
-#define DEFAULT_CHANNEL          1
-#define DEFAULT_NUM_SAMPLE        10000
-#define DEFAULT_NUM_SEGMENT        20
-#define DEFAULT_SAMPLE_RATE        2.0                  // Unit : GHz
-#define DEFAULT_SAMPLE_INTERVAL      (1.0 / (DEFAULT_SAMPLE_RATE * 1e9))  // Unit : Seconds
-#define DEFAULT_DELAYTIME        0.0
-#define DEFAULT_VERTICAL_FULLSCALE    0.2
-#define DEFAULT_VERTICAL_OFFSET      0.0
-#define DEFAULT_VERTICAL_COUPLING    3      // DC, 50 ohm
-#define DEFAULT_VERTICAL_BANDWIDTH    0      // 0 : No bandwidth limit
-                          // 1 : 25MHz
-#define DEFAULT_USED_CHANNEL      0x00000001  // use channel 1 on a 2-channel digitizer
-#define DEFAULT_TIMEOUT          20000    // 10000 milliseconds
+#define DEFAULT_CHANNEL             1
+#define DEFAULT_NUM_SAMPLE          10000
+#define DEFAULT_NUM_SEGMENT         20
+#define DEFAULT_SAMPLE_RATE         2.0                  // Unit : GHz
+#define DEFAULT_SAMPLE_INTERVAL     (1.0 / (DEFAULT_SAMPLE_RATE * 1e9))  // Unit : Seconds
+#define DEFAULT_DELAYTIME           0.0
+#define DEFAULT_VERTICAL_FULLSCALE  10.0
+#define DEFAULT_VERTICAL_OFFSET     0.0
+#define DEFAULT_VERTICAL_COUPLING   2       // DC, 50 ohm
+#define DEFAULT_VERTICAL_BANDWIDTH  0       // 0 : No bandwidth limit
+                                            // 1 : 25MHz
+#define DEFAULT_USED_CHANNEL        0x00000001  // use channel 1 on a 2-channel digitizer
+#define DEFAULT_TIMEOUT             20000    // 10000 milliseconds
 
 #define SAFE_FREE(ptr)          { if (ptr) { free(ptr); ptr = NULL; } }
 
@@ -141,13 +145,13 @@ class PicoScope
      * @return true for opened
      */
     bool isOpen();
-    
+
     /**
      * @desc Close Picoscope oscilloscope
      * @return PICO_STATUS
      */
     PICO_STATUS close();
-    
+
     /**
      * @desc Reset Picoscope oscilloscope
      * @return PICO_STATUS
@@ -162,6 +166,7 @@ class PicoScope
     /* These functions for helping purpose of MALDI */
     PICO_STATUS setDigitizer(bool bRepeat);
     PICO_STATUS doAcquisition(bool bIsSAR);
+    PICO_STATUS waitForAcquisition();
     PICO_STATUS fetchData(bool bIsSAR);
 
     /* Getter */
@@ -219,8 +224,6 @@ class PicoScope
 
     /* These functions for helping purpose of MALDI */
     void doTriggerSet(UNIT *unit);
-
-    static void acquisitionCallback(int16_t handle, PICO_STATUS status, void *pParameter);
 };
 
 #endif

@@ -85,7 +85,8 @@ PICO_STATUS PicoScope::setConfigVertical(double lfFullScale, double lfOffset, in
   nCoupling = PS6000_DC_50R;
 
   this->lfFullScale = lfFullScale;
-  this->lfOffset = lfFullScale * 7.0 / 16.0;
+  this->lfOffset = lfOffset;
+  //this->lfOffset = lfFullScale * 7.0 / 16.0;
   this->nCoupling = nCoupling;
   this->nBandwidth = nBandwidth;
 
@@ -162,7 +163,7 @@ PICO_STATUS PicoScope::setDigitizer(bool bRepeat)
     psStatus = ps6000SetEts(uAllUnit.handle, PS6000_ETS_OFF, 0, 0, NULL); // Turn off ETS
 
     if (psStatus != PICO_OK)
-      return 1;
+      return psStatus;
 
     // setting signal chennel
     for (int32_t i = 0; i<4; i++)
@@ -178,13 +179,13 @@ PICO_STATUS PicoScope::setDigitizer(bool bRepeat)
           PS6000_COUPLING(uAllUnit.channelSettings[i].DCcoupled), PS6000_RANGE(uAllUnit.channelSettings[i].range), 0.f, PS6000_BANDWIDTH_LIMITER(nBandwidth));
       }
       if (psStatus != PICO_OK)
-        return 1;
+        return psStatus;
     }
 
     // Segment the memory
     psStatus = ps6000MemorySegments(uAllUnit.handle, nSegments, &nMaxSamples);
     if (psStatus != PICO_OK)
-      return 1;
+      return psStatus;
 
     // Set the number of captures
     psStatus = ps6000SetNoOfCaptures(uAllUnit.handle, nCaptures);
@@ -202,12 +203,32 @@ PICO_STATUS PicoScope::setDigitizer(bool bRepeat)
 PICO_STATUS PicoScope::doAcquisition(bool bIsSAR)
 {
   PICO_STATUS psStatus;
-  int32_t timeIndisposed;
   uint32_t segmentIndex = 0;
   uint32_t nTimeBase = getTimeBase(lfAcquisitionRate);
 
   isAcquisitionReady = false;
-  psStatus = ps6000RunBlock(uAllUnit.handle, 0, nSamples, nTimeBase, 1, &timeIndisposed, segmentIndex, acquisitionCallback, this);
+  psStatus = ps6000RunBlock(uAllUnit.handle, 0, nSamples, nTimeBase, 1, NULL, segmentIndex, NULL, NULL);
+
+  return psStatus;
+}
+
+PICO_STATUS PicoScope::waitForAcquisition()
+{
+  PICO_STATUS psStatus;
+  int16_t ready = 0;
+
+  while (true)
+  {
+    _sleep(1);
+
+    psStatus = ps6000IsReady(uAllUnit.handle, &ready);
+
+    if (psStatus != PICO_OK || ready)
+      break;
+  }
+
+  if (ready)
+    isAcquisitionReady = true;
 
   return psStatus;
 }
@@ -218,10 +239,8 @@ PICO_STATUS PicoScope::fetchData(bool bIsSAR)
   uint32_t nCompletedCaptures;
 
   // 1. Wait for Event
-  while (!isAcquisitionReady)
-  {
-    _sleep(1);
-  }
+  if (!isAcquisitionReady)
+    return -1;
 
   // 2. Get NoOfCaptures
   psStatus = ps6000GetNoOfCaptures(uAllUnit.handle, &nCompletedCaptures);
@@ -252,7 +271,7 @@ PICO_STATUS PicoScope::fetchData(bool bIsSAR)
     int32_t nIndex = capture * nSamples;
     for (int32_t j = 0; j < nSamples; j++)
     {
-      pcData[nIndex + j] = pnRapidBuffers[capture][j] / 256;
+      pcData[nIndex + j] = pnRapidBuffers[capture][j] >> 8;// / 256;
     }
   }
 
@@ -599,15 +618,6 @@ void PicoScope::doTriggerSet(UNIT *unit)
 
   uint32_t nDelayCount = int(lfDelayTime * (lfAcquisitionRate * 1e9));
 
-  setTrigger(unit->handle, &sourceDetails, 1, &conditions, 1, &directions, &pulseWidth, nDelayCount, 0, 0);
-}
-
-void PicoScope::acquisitionCallback(int16_t handle, PICO_STATUS status, void *pParameter)
-{
-  PicoScope* pThis = (PicoScope *)pParameter;
-
-  if (status != PICO_CANCELLED)
-  {
-    pThis->isAcquisitionReady = true;
-  }
+  //setTrigger(unit->handle, &sourceDetails, 1, &conditions, 1, &directions, &pulseWidth, nDelayCount, 0, 0);
+  setTrigger(unit->handle, &sourceDetails, 1, &conditions, 1, &directions, &pulseWidth, nDelayCount, 0, 1000);
 }

@@ -19,10 +19,16 @@ typedef struct _PICOSCOPE_OPTION
 
 typedef struct _WORK
 {
+  // doAcquisition only
+  Nan::Callback *callback2;
+
+  // Common
   Nan::Callback *callback;
   uint32_t param1;
   uint32_t param2;
   PICO_STATUS psStatus;
+
+  // fetchData only
   int8_t *data;
   int32_t length;
 } WORK;
@@ -31,19 +37,6 @@ static PicoScope *ppsMainObject = NULL;
 PICOSCOPE_OPTION psOption;
 
 #define PICO_UNKNOWN_ERROR      0xFFFFFFFFUL
-
-void parseOptions(v8::Local<v8::Object> options)
-{
-  psOption.lfFullScale = Nan::Get(options, Nan::New<v8::String>("verticalScale").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
-  psOption.lfOffset = Nan::Get(options, Nan::New<v8::String>("verticalOffset").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
-  psOption.lfSamplerate = Nan::Get(options, Nan::New<v8::String>("horizontalSamplerate").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
-  psOption.lfDelayTime = Nan::Get(options, Nan::New<v8::String>("triggerDelay").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
-  psOption.nCoupling = Nan::Get(options, Nan::New<v8::String>("verticalCoupling").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-  psOption.nBandwidth = Nan::Get(options, Nan::New<v8::String>("verticalBandwidth").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-  psOption.nSamples = Nan::Get(options, Nan::New<v8::String>("horizontalSamples").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-  psOption.nSegments = Nan::Get(options, Nan::New<v8::String>("horizontalSegments").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-  psOption.nChannel = Nan::Get(options, Nan::New<v8::String>("channel").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-}
 
 void postOperation(uv_work_t* ptr)
 {
@@ -59,6 +52,7 @@ void postOperation(uv_work_t* ptr)
   pWork->callback->Call(ret_count, ret);
 
   // Free Work
+  delete pWork->callback;
   free(pWork);
   delete ptr;
 }
@@ -75,14 +69,6 @@ void openWork(uv_work_t* ptr)
   {
     // Open PicoScope
     psStatus = ppsMainObject->open();
-
-    if (pWork->param1)
-    {
-      ppsMainObject->setConfigVertical(psOption.lfFullScale, psOption.lfOffset, psOption.nCoupling, psOption.nBandwidth);
-      ppsMainObject->setConfigHorizontal(psOption.lfSamplerate, psOption.nSamples, psOption.nSegments);
-      ppsMainObject->setConfigTrigger(psOption.lfDelayTime);
-      ppsMainObject->setConfigChannel(psOption.nChannel);
-    }
   }
 
   pWork->psStatus = psStatus;
@@ -109,7 +95,7 @@ void openPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
   bool bOption = false;
 
-  if (args.Length() > 2 || args.Length() < 1)
+  if (args.Length() != 1)
   {
     Nan::ThrowTypeError("Wrong number of arguments");
 
@@ -124,26 +110,7 @@ void openPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
     return;
   }
 
-  // JSON options
-  if (args.Length() == 2)
-  {
-    if (!args[1]->IsObject())
-    {
-      Nan::ThrowTypeError("Argument 2 should be an Object");
-
-      return;
-    }
-
-    bOption = true;
-  }
-
   v8::Local<v8::Function> callback = args[0].As<v8::Function>();
-
-  if (bOption)
-  {
-    // Get options
-    parseOptions(args[1]->ToObject());
-  }
 
   // Assign work to libuv queue
   WORK *pWork;
@@ -154,7 +121,6 @@ void openPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 
   pUVWork->data = pWork;
   pWork->callback = new Nan::Callback(callback);
-  pWork->param1 = bOption;
 
   uv_queue_work(uv_default_loop(), pUVWork, openWork, (uv_after_work_cb)postOperation);
 }
@@ -235,7 +201,16 @@ void setOption(const Nan::FunctionCallbackInfo<v8::Value>& args)
   }
 
   // Parse options
-  parseOptions(args[1]->ToObject());
+  v8::Local<v8::Object> options = args[0]->ToObject();
+  psOption.lfFullScale = Nan::Get(options, Nan::New<v8::String>("verticalScale").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+  psOption.lfOffset = Nan::Get(options, Nan::New<v8::String>("verticalOffset").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+  psOption.lfSamplerate = Nan::Get(options, Nan::New<v8::String>("horizontalSamplerate").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+  psOption.lfDelayTime = Nan::Get(options, Nan::New<v8::String>("triggerDelay").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+  psOption.nCoupling = Nan::Get(options, Nan::New<v8::String>("verticalCoupling").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+  psOption.nBandwidth = Nan::Get(options, Nan::New<v8::String>("verticalBandwidth").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+  psOption.nSamples = Nan::Get(options, Nan::New<v8::String>("horizontalSamples").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+  psOption.nSegments = Nan::Get(options, Nan::New<v8::String>("horizontalSegments").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
+  psOption.nChannel = Nan::Get(options, Nan::New<v8::String>("channel").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
 
   // Apply
   if (ppsMainObject)
@@ -267,8 +242,8 @@ void setDigitizerWork(uv_work_t *ptr)
 
 /**
  * @desc Set Digitizer
+ * @param[in] bRepeat: Repeated setting (will pass configuration)
  * @param[in] callback:
- * @param[in] bRepeat:
  */
 void setDigitizerPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
@@ -279,23 +254,23 @@ void setDigitizerPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
     return;
   }
 
-  // Callback
-  if (!args[0]->IsFunction())
-  {
-    Nan::ThrowTypeError("Argument 1 should be a function");
-
-    return;
-  }
-
   // boolean
-  if (!args[1]->IsBoolean())
+  if (!args[0]->IsBoolean())
   {
-    Nan::ThrowTypeError("Argument 2 should be a boolean");
+    Nan::ThrowTypeError("Argument 1 should be a boolean");
 
     return;
   }
 
-  v8::Local<v8::Function> callback = args[0].As<v8::Function>();
+  // Callback
+  if (!args[1]->IsFunction())
+  {
+    Nan::ThrowTypeError("Argument 2 should be a function");
+
+    return;
+  }
+
+  v8::Local<v8::Function> callback = args[1].As<v8::Function>();
 
   // Assign work to libuv queue
   WORK *pWork;
@@ -306,9 +281,41 @@ void setDigitizerPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 
   pUVWork->data = pWork;
   pWork->callback = new Nan::Callback(callback);
-  pWork->param1 = args[1]->ToBoolean()->BooleanValue();
+  pWork->param1 = args[0]->ToBoolean()->BooleanValue();
 
   uv_queue_work(uv_default_loop(), pUVWork, setDigitizerWork, (uv_after_work_cb)postOperation);
+}
+
+void doAcquisitionWait(uv_work_t *ptr)
+{
+  PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
+  WORK *pWork = (WORK *)ptr->data;
+
+  if (ppsMainObject)
+  {
+    psStatus = ppsMainObject->waitForAcquisition();
+  }
+
+  pWork->psStatus = psStatus;
+}
+
+void doAcquisitionPost(uv_work_t *ptr)
+{
+  WORK *pWork = (WORK *)ptr->data;
+  Nan::Callback *callback = pWork->callback2;
+
+  postOperation(ptr);
+
+  // Assign work to libuv queue
+  uv_work_t *pUVWork;
+
+  pWork = (WORK *)calloc(1, sizeof(WORK));
+  pUVWork = new uv_work_t();
+
+  pUVWork->data = pWork;
+  pWork->callback = callback;
+
+  uv_queue_work(uv_default_loop(), pUVWork, doAcquisitionWait, (uv_after_work_cb)postOperation);
 }
 
 void doAcquisitionWork(uv_work_t *ptr)
@@ -326,35 +333,45 @@ void doAcquisitionWork(uv_work_t *ptr)
 
 /**
  * @desc Do acquisition
- * @param[in] callback:
  * @param[in] bIsSAR:
+ * @param[in] callback1:
+ * @param[in] callback2:
  */
 void doAcquisitionPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
-  if (args.Length() != 2)
+  if (args.Length() != 3)
   {
     Nan::ThrowTypeError("Wrong number of arguments");
 
     return;
   }
 
-  // Callback
-  if (!args[0]->IsFunction())
-  {
-    Nan::ThrowTypeError("Argument 1 should be a function");
-
-    return;
-  }
-
   // boolean
-  if (!args[1]->IsBoolean())
+  if (!args[0]->IsBoolean())
   {
-    Nan::ThrowTypeError("Argument 2 should be a boolean");
+    Nan::ThrowTypeError("Argument 1 should be a boolean");
 
     return;
   }
 
-  v8::Local<v8::Function> callback = args[0].As<v8::Function>();
+  // Callback
+  if (!args[1]->IsFunction())
+  {
+    Nan::ThrowTypeError("Argument 2 should be a function");
+
+    return;
+  }
+
+  // Callback
+  if (!args[2]->IsFunction())
+  {
+    Nan::ThrowTypeError("Argument 3 should be a function");
+
+    return;
+  }
+
+  v8::Local<v8::Function> callback = args[1].As<v8::Function>();
+  v8::Local<v8::Function> callback2 = args[2].As<v8::Function>();
 
   // Assign work to libuv queue
   WORK *pWork;
@@ -365,9 +382,10 @@ void doAcquisitionPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 
   pUVWork->data = pWork;
   pWork->callback = new Nan::Callback(callback);
-  pWork->param1 = args[1]->ToBoolean()->BooleanValue();
+  pWork->callback2 = new Nan::Callback(callback2);
+  pWork->param1 = args[0]->ToBoolean()->BooleanValue();
 
-  uv_queue_work(uv_default_loop(), pUVWork, doAcquisitionWork, (uv_after_work_cb)postOperation);
+  uv_queue_work(uv_default_loop(), pUVWork, doAcquisitionWork, (uv_after_work_cb)doAcquisitionPost);
 }
 
 void fetchDataPost(uv_work_t *ptr)
@@ -385,6 +403,7 @@ void fetchDataPost(uv_work_t *ptr)
   pWork->callback->Call(ret_count, ret);
 
   // Free Work
+  delete pWork->callback;
   free(pWork);
   delete ptr;
 }
@@ -410,8 +429,8 @@ void fetchDataWork(uv_work_t *ptr)
 
 /**
  * @desc Fetch data from PicoScope
- * @param[in] callback:
  * @param[in] bIsSAR:
+ * @param[in] callback:
  */
 void fetchDataPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
@@ -422,23 +441,23 @@ void fetchDataPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
     return;
   }
 
-  // Callback
-  if (!args[0]->IsFunction())
-  {
-    Nan::ThrowTypeError("Argument 1 should be a function");
-
-    return;
-  }
-
   // boolean
-  if (!args[1]->IsBoolean())
+  if (!args[0]->IsBoolean())
   {
-    Nan::ThrowTypeError("Argument 2 should be a boolean");
+    Nan::ThrowTypeError("Argument 1 should be a boolean");
 
     return;
   }
 
-  v8::Local<v8::Function> callback = args[0].As<v8::Function>();
+  // Callback
+  if (!args[1]->IsFunction())
+  {
+    Nan::ThrowTypeError("Argument 2 should be a function");
+
+    return;
+  }
+
+  v8::Local<v8::Function> callback = args[1].As<v8::Function>();
 
   // Assign work to libuv queue
   WORK *pWork;
@@ -449,7 +468,7 @@ void fetchDataPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 
   pUVWork->data = pWork;
   pWork->callback = new Nan::Callback(callback);
-  pWork->param1 = args[1]->ToBoolean()->BooleanValue();
+  pWork->param1 = args[0]->ToBoolean()->BooleanValue();
 
   uv_queue_work(uv_default_loop(), pUVWork, fetchDataWork, (uv_after_work_cb)fetchDataPost);
 }
