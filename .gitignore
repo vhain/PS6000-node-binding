@@ -6,3 +6,6 @@ Debug/
 *.db
 *.lib
 *.dll
+Pipe_inOut
+Pipe_inOutFifo
+*.opendb

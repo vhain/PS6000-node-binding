@@ -25,7 +25,7 @@ typedef struct _WORK
 	PICO_STATUS psStatus;
 } WORK;
 
-PicoScope *ppsMainObject;
+static PicoScope *ppsMainObject = NULL;
 PICOSCOPE_OPTION psOption;
 
 #define PICO_UNKNOWN_ERROR			0xFFFFFFFFUL
@@ -45,6 +45,7 @@ void openPost(uv_work_t* ptr)
 
 	// Free Work
 	free(pWork);
+	delete ptr;
 }
 
 void openWork(uv_work_t* ptr)
@@ -170,6 +171,7 @@ void closePost(uv_work_t *ptr)
 
 	// Free Work
 	free(pWork);
+	delete ptr;
 }
 
 void closeWork(uv_work_t *ptr)
