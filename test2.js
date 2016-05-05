@@ -20,6 +20,8 @@ co(function* () {
 
   if (status == picoscope.PICO_STATUS.PICO_OK) {
     yield picoscope.setOption(option)
+    let scopedata = yield picoscope.getScopeDataList()
+    console.log('getScopeDataList: ' + scopedata)
 
     status = yield picoscope.setDigitizer(false)
     console.log('setDigitizer:' + picoscope.PICO_STATUS.toString(status))

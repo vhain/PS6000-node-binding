@@ -19,6 +19,7 @@ PicoScope::PicoScope()
   nBufferLength = 0;
   pcData = NULL;
   nModelNumber = MODEL_PS6402C;
+  sdDataList.clear();
 }
 
 PicoScope::~PicoScope()

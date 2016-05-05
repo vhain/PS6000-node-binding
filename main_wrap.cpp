@@ -307,7 +307,7 @@ void doAcquisitionWaitPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
  }
 
  // Callback
- if (!args[1]->IsFunction())
+ if (!args[0]->IsFunction())
  {
    Nan::ThrowTypeError("Argument 2 should be a function");
 
@@ -863,6 +863,37 @@ void defineConstants(v8::Local<v8::Object> module)
   module->DefineOwnProperty(moduleContext, bandwidths_name, bandwidths, constant_attributes).FromJust();
 }
 
+void getScopeDataList(const Nan::FunctionCallbackInfo<v8::Value>& args)
+{
+  if (args.Length() != 0)
+  {
+    Nan::ThrowTypeError("Wrong number of arguments");
+
+    return;
+  }
+
+  v8::Local<v8::Object> ret = Nan::New<v8::Object>();
+
+  if (ppsMainObject)
+  {
+    SCOPE_DATA* data = ppsMainObject->getScopeDataList();
+
+    Nan::Set(ret, Nan::New<v8::String>("nLength").ToLocalChecked(), Nan::New<v8::Int32>(data->nLength));
+    Nan::Set(ret, Nan::New<v8::String>("absoluteInitialX").ToLocalChecked(), Nan::New<v8::Number>(data->absoluteInitialX));
+    Nan::Set(ret, Nan::New<v8::String>("relativeInitialX").ToLocalChecked(), Nan::New<v8::Number>(data->relativeInitialX));
+    Nan::Set(ret, Nan::New<v8::String>("actualSamples").ToLocalChecked(), Nan::New<v8::Int32>(data->actualSamples));
+    Nan::Set(ret, Nan::New<v8::String>("gain").ToLocalChecked(), Nan::New<v8::Number>(data->gain));
+    Nan::Set(ret, Nan::New<v8::String>("offset").ToLocalChecked(), Nan::New<v8::Number>(data->offset));
+    Nan::Set(ret, Nan::New<v8::String>("xIncrement").ToLocalChecked(), Nan::New<v8::Number>(data->xIncrement));
+    Nan::Set(ret, Nan::New<v8::String>("samplingRate").ToLocalChecked(), Nan::New<v8::Number>(data->samplingRate));
+    Nan::Set(ret, Nan::New<v8::String>("nShots").ToLocalChecked(), Nan::New<v8::Int32>(data->nShots));
+    Nan::Set(ret, Nan::New<v8::String>("nRealShots").ToLocalChecked(), Nan::New<v8::Int32>(data->nRealShots));
+    Nan::Set(ret, Nan::New<v8::String>("nTotalShots").ToLocalChecked(), Nan::New<v8::Int32>(data->nTotalShots));
+  }
+
+  args.GetReturnValue().Set(ret);
+}
+
 void Init(v8::Local<v8::Object> module)
 {
   Nan::SetMethod(module, "open", openPre);
@@ -872,6 +903,7 @@ void Init(v8::Local<v8::Object> module)
   Nan::SetMethod(module, "doAcquisition", doAcquisitionPre);
   Nan::SetMethod(module, "waitAcquisition", doAcquisitionWaitPre);
   Nan::SetMethod(module, "fetchData", fetchDataPre);
+  Nan::SetMethod(module, "getScopeDataList", getScopeDataList);
 
   defineConstants(module);
 }

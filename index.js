@@ -63,6 +63,13 @@ function fetchData(bIsISR) {
   })
 }
 
+function getScopeDataList() {
+  return new Promise((resolve, reject) => {
+    let data = picoscope.getScopeDataList()
+    resolve(data)
+  })
+}
+
 module.exports = {
   PICO_STATUS,
   PS6000_COUPLING,
@@ -74,5 +81,6 @@ module.exports = {
   setDigitizer,
   doAcquisition,
   waitAcquisition,
-  fetchData
+  fetchData,
+  getScopeDataList
 }
