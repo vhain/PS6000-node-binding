@@ -19,9 +19,6 @@ typedef struct _PICOSCOPE_OPTION
 
 typedef struct _WORK
 {
-  // doAcquisition only
-  Nan::Callback *callback2;
-
   // Common
   Nan::Callback *callback;
   uint32_t param1;
@@ -287,7 +284,7 @@ void setDigitizerPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
   uv_queue_work(uv_default_loop(), pUVWork, setDigitizerWork, (uv_after_work_cb)postOperation);
 }
 
-void doAcquisitionWait(uv_work_t *ptr)
+void doAcquisitionWaitWork(uv_work_t *ptr)
 {
   PICO_STATUS psStatus = PICO_UNKNOWN_ERROR;
   WORK *pWork = (WORK *)ptr->data;
@@ -300,23 +297,36 @@ void doAcquisitionWait(uv_work_t *ptr)
   pWork->psStatus = psStatus;
 }
 
-void doAcquisitionPost(uv_work_t *ptr)
+void doAcquisitionWaitPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
-  WORK *pWork = (WORK *)ptr->data;
-  Nan::Callback *callback = pWork->callback2;
+ if (args.Length() != 1)
+ {
+   Nan::ThrowTypeError("Wrong number of arguments");
 
-  postOperation(ptr);
+   return;
+ }
 
-  // Assign work to libuv queue
-  uv_work_t *pUVWork;
+ // Callback
+ if (!args[1]->IsFunction())
+ {
+   Nan::ThrowTypeError("Argument 2 should be a function");
 
-  pWork = (WORK *)calloc(1, sizeof(WORK));
-  pUVWork = new uv_work_t();
+   return;
+ }
 
-  pUVWork->data = pWork;
-  pWork->callback = callback;
+ v8::Local<v8::Function> callback = args[0].As<v8::Function>();
 
-  uv_queue_work(uv_default_loop(), pUVWork, doAcquisitionWait, (uv_after_work_cb)postOperation);
+ // Assign work to libuv queue
+ WORK *pWork;
+ uv_work_t *pUVWork;
+
+ pWork = (WORK *)calloc(1, sizeof(WORK));
+ pUVWork = new uv_work_t();
+
+ pUVWork->data = pWork;
+ pWork->callback = new Nan::Callback(callback);
+
+ uv_queue_work(uv_default_loop(), pUVWork, doAcquisitionWaitWork, (uv_after_work_cb)postOperation);
 }
 
 void doAcquisitionWork(uv_work_t *ptr)
@@ -335,12 +345,11 @@ void doAcquisitionWork(uv_work_t *ptr)
 /**
  * @desc Do acquisition
  * @param[in] bIsSAR:
- * @param[in] callback1:
- * @param[in] callback2:
+ * @param[in] callback:
  */
 void doAcquisitionPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 {
-  if (args.Length() != 3)
+  if (args.Length() != 2)
   {
     Nan::ThrowTypeError("Wrong number of arguments");
 
@@ -363,16 +372,7 @@ void doAcquisitionPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
     return;
   }
 
-  // Callback
-  if (!args[2]->IsFunction())
-  {
-    Nan::ThrowTypeError("Argument 3 should be a function");
-
-    return;
-  }
-
   v8::Local<v8::Function> callback = args[1].As<v8::Function>();
-  v8::Local<v8::Function> callback2 = args[2].As<v8::Function>();
 
   // Assign work to libuv queue
   WORK *pWork;
@@ -383,10 +383,9 @@ void doAcquisitionPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
 
   pUVWork->data = pWork;
   pWork->callback = new Nan::Callback(callback);
-  pWork->callback2 = new Nan::Callback(callback2);
   pWork->param1 = args[0]->ToBoolean()->BooleanValue();
 
-  uv_queue_work(uv_default_loop(), pUVWork, doAcquisitionWork, (uv_after_work_cb)doAcquisitionPost);
+  uv_queue_work(uv_default_loop(), pUVWork, doAcquisitionWork, (uv_after_work_cb)postOperation);
 }
 
 void fetchDataPost(uv_work_t *ptr)
@@ -817,7 +816,7 @@ void defineConstants(v8::Local<v8::Object> module)
     NODE_DEFINE_CONSTANT(retcodes, PICO_DEVICE_TIME_STAMP_RESET);
     NODE_DEFINE_CONSTANT(retcodes, PICO_WATCHDOGTIMER);
   }
-  
+
   Nan::SetMethod(retcodes, "toString", retcodeToString);
 
   v8::Local<v8::String> retcode_name = v8::String::NewFromUtf8(moduleIsolate, "PICO_STATUS");
@@ -845,7 +844,7 @@ void defineConstants(v8::Local<v8::Object> module)
 
   // Add PS6000_COUPLING constants
   v8::Local<v8::Object> couplings = Nan::New<v8::Object>();
-  
+
   NODE_DEFINE_CONSTANT(couplings, PS6000_AC);
   NODE_DEFINE_CONSTANT(couplings, PS6000_DC_1M);
   NODE_DEFINE_CONSTANT(couplings, PS6000_DC_50R);
@@ -871,6 +870,7 @@ void Init(v8::Local<v8::Object> module)
   Nan::SetMethod(module, "setOption", setOption);
   Nan::SetMethod(module, "setDigitizer", setDigitizerPre);
   Nan::SetMethod(module, "doAcquisition", doAcquisitionPre);
+  Nan::SetMethod(module, "waitAcquisition", doAcquisitionWaitPre);
   Nan::SetMethod(module, "fetchData", fetchDataPre);
 
   defineConstants(module);
