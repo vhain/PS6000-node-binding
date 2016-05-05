@@ -15,43 +15,74 @@ let option = {
 }
 
 picoscope.open((result) => {
-  console.log('open: res: ' + picoscope.PICO_STATUS.toString(result))
-
-  if (result === picoscope.PICO_STATUS.PICO_OK) {
-    result = picoscope.setOption(option)
+  new Promise(function (resolve, reject) {
+    console.log('open: res: ' + picoscope.PICO_STATUS.toString(result))
 
     if (result === picoscope.PICO_STATUS.PICO_OK) {
+      result = picoscope.setOption(option)
+
+      if (result === picoscope.PICO_STATUS.PICO_OK) {
+        return resolve()
+      }
+    }
+
+    return reject()
+  }).then(function () {
+    return new Promise(function (resolve, reject) {
       picoscope.setDigitizer(false, (result) => {
         console.log('setDigitizer: res: ' + picoscope.PICO_STATUS.toString(result))
 
         if (result === picoscope.PICO_STATUS.PICO_OK) {
-          picoscope.doAcquisition(false, (result) => {
-            console.log('doAcquisition: res: ' + picoscope.PICO_STATUS.toString(result))
-          }, (result) => {
-            console.log('doAcquisition: finished: ' + picoscope.PICO_STATUS.toString(result))
+          return resolve()
+        }
 
-            if (result === picoscope.PICO_STATUS.PICO_OK) {
-              picoscope.fetchData(false, (result, data) => {
-                console.log('fetchData: res: ' + picoscope.PICO_STATUS.toString(result))
+        reject()
+      })
+    })
+  }).then(function () {
+    return new Promise(function (resolve, reject) {
+      picoscope.doAcquisition(false, (result) => {
+        console.log('doAcquisition: res: ' + picoscope.PICO_STATUS.toString(result))
+      }, (result) => {
+        console.log('doAcquisition: finished: ' + picoscope.PICO_STATUS.toString(result))
 
-                if (result === picoscope.PICO_STATUS.PICO_OK) {
-                  console.log(data)
+        if (result === picoscope.PICO_STATUS.PICO_OK) {
+          return resolve()
+        }
 
-                  fs.writeFile("result.bin", data, (error) => {
-                    if (error) {
-                      console.log('writeFile failed: ' + error)
-                    }
-                  })
+        reject()
+      })
+    })
+  }).then(function () {
+    return new Promise(function (resolve, reject) {
+      picoscope.fetchData(false, (result, data) => {
+        console.log('fetchData: res: ' + picoscope.PICO_STATUS.toString(result))
 
-                  picoscope.close((result) => {
-                    console.log('close: res: ' + picoscope.PICO_STATUS.toString(result))
-                  })
-                }
-              })
-            }
-          })
+        if (result === picoscope.PICO_STATUS.PICO_OK) {
+          console.log(data)
+          return resolve()
         }
       })
-    }
-  }
+
+      reject()
+    })
+  }).then(function () {
+    return new Promise(function (resolve, reject) {
+      fs.writeFile("result.bin", data, (error) => {
+        if (error) {
+          console.log('writeFile failed: ' + error)
+          return reject()
+        }
+
+        resolve()
+      })
+    })
+  }).then(function () {
+    return new Promise(function (resolve, reject) {
+      picoscope.close((result) => {
+        console.log('close: res: ' + picoscope.PICO_STATUS.toString(result))
+        resolve()
+      })
+    })
+  })
 })
