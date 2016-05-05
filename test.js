@@ -62,9 +62,9 @@ picoscope.open((result) => {
           console.log(data)
           return resolve()
         }
-      })
 
-      reject()
+        reject()
+      })
     })
   }).then(function () {
     return new Promise(function (resolve, reject) {
