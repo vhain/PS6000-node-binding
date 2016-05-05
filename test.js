@@ -60,13 +60,13 @@ picoscope.open((result) => {
 
         if (result === picoscope.PICO_STATUS.PICO_OK) {
           console.log(data)
-          return resolve()
+          return resolve(data)
         }
 
         reject()
       })
     })
-  }).then(function () {
+  }).then(function (data) {
     return new Promise(function (resolve, reject) {
       fs.writeFile("result.bin", data, (error) => {
         if (error) {
