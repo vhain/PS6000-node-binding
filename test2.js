@@ -19,7 +19,7 @@ co(function* () {
   console.log('open: ' + picoscope.PICO_STATUS.toString(status))
 
   if (status == picoscope.PICO_STATUS.PICO_OK) {
-    picoscope.setOption(option)
+    yield picoscope.setOption(option)
 
     status = yield picoscope.setDigitizer(false)
     console.log('setDigitizer:' + picoscope.PICO_STATUS.toString(status))
@@ -32,7 +32,7 @@ co(function* () {
         status = yield picoscope.waitAcquisition()
         console.log('waitAcquisition: ' + picoscope.PICO_STATUS.toString(status))
 
-        retval = yield picoscope.fetchData(false)
+        let retval = yield picoscope.fetchData(false)
         console.log('fetchData: ' + picoscope.PICO_STATUS.toString(retval.result))
 
         if (retval.result == picoscope.PICO_STATUS.PICO_OK) {
@@ -41,7 +41,11 @@ co(function* () {
       }
     }
 
-    yield picoscope.close()
-    console.log('close')
+    status = yield picoscope.close()
+    console.log('close: ' + picoscope.PICO_STATUS.toString(status))
   }
-})
+}).catch(onerror)
+
+function onerror(err) {
+  console.log(err.stack)
+}

@@ -3,10 +3,10 @@
 const picoscope = require('./build/release/node-ps6000')
 const keyMirror = require('keyMirror')
 
-const PICO_STATUS = keyMirror(picoscope.PICO_STATUS)
-const PS6000_COUPLING = keyMirror(picoscope.PS6000_COUPLING)
-const PS6000_BANDWIDTH_LIMITER = keyMirror(picoscope.PS6000_BANDWIDTH_LIMITER)
-const PS6000_RANGE = keyMirror(picoscope.PS6000_RANGE)
+const PICO_STATUS = picoscope.PICO_STATUS
+const PS6000_COUPLING = picoscope.PS6000_COUPLING
+const PS6000_BANDWIDTH_LIMITER = picoscope.PS6000_BANDWIDTH_LIMITER
+const PS6000_RANGE = picoscope.PS6000_RANGE
 
 function open() {
   return new Promise((resolve, reject) => {
@@ -24,7 +24,12 @@ function close() {
   })
 }
 
-const setOption = picoscope.setOption
+function setOption(option) {
+  return new Promise((resolve, reject) => {
+    picoscope.setOption(option)
+    resolve()
+  })
+}
 
 function setDigitizer(bRepeatedSetting) {
   return new Promise((resolve, reject) => {
