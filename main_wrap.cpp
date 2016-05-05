@@ -36,6 +36,9 @@ typedef struct _WORK
 PicoScope *ppsMainObject = NULL;
 PICOSCOPE_OPTION psOption;
 
+#define GET_VARIABLE_NAME(value)    #value
+#define NAN_NEW_STRING(str)         Nan::New<v8::String>(str).ToLocalChecked()
+
 #define PICO_UNKNOWN_ERROR      0xFFFFFFFFUL
 
 void postOperation(uv_work_t* ptr)
@@ -473,6 +476,187 @@ void fetchDataPre(const Nan::FunctionCallbackInfo<v8::Value>& args)
   uv_queue_work(uv_default_loop(), pUVWork, fetchDataWork, (uv_after_work_cb)fetchDataPost);
 }
 
+void retcodeToString(const Nan::FunctionCallbackInfo<v8::Value>& args)
+{
+  if (args.Length() != 1)
+  {
+    Nan::ThrowTypeError("Wrong number of arguments");
+
+    return;
+  }
+
+  // integer
+  if (!args[0]->IsInt32())
+  {
+    Nan::ThrowTypeError("Argument 1 should be a integer");
+
+    return;
+  }
+
+  uint32_t retcode = args[0]->ToInt32()->Int32Value();
+  v8::Local<v8::String> string;
+
+  switch (retcode)
+  {
+    case PICO_UNKNOWN_ERROR                             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_UNKNOWN_ERROR                             ));   break;
+    case PICO_OK                                        :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_OK                                        ));   break;
+    case PICO_MAX_UNITS_OPENED                          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_MAX_UNITS_OPENED                          ));   break;
+    case PICO_MEMORY_FAIL                               :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_MEMORY_FAIL                               ));   break;
+    case PICO_NOT_FOUND                                 :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NOT_FOUND                                 ));   break;
+    case PICO_FW_FAIL                                   :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_FW_FAIL                                   ));   break;
+    case PICO_OPEN_OPERATION_IN_PROGRESS                :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_OPEN_OPERATION_IN_PROGRESS                ));   break;
+    case PICO_OPERATION_FAILED                          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_OPERATION_FAILED                          ));   break;
+    case PICO_NOT_RESPONDING                            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NOT_RESPONDING                            ));   break;
+    case PICO_CONFIG_FAIL                               :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_CONFIG_FAIL                               ));   break;
+    case PICO_KERNEL_DRIVER_TOO_OLD                     :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_KERNEL_DRIVER_TOO_OLD                     ));   break;
+    case PICO_EEPROM_CORRUPT                            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_EEPROM_CORRUPT                            ));   break;
+    case PICO_OS_NOT_SUPPORTED                          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_OS_NOT_SUPPORTED                          ));   break;
+    case PICO_INVALID_HANDLE                            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_HANDLE                            ));   break;
+    case PICO_INVALID_PARAMETER                         :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_PARAMETER                         ));   break;
+    case PICO_INVALID_TIMEBASE                          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_TIMEBASE                          ));   break;
+    case PICO_INVALID_VOLTAGE_RANGE                     :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_VOLTAGE_RANGE                     ));   break;
+    case PICO_INVALID_CHANNEL                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_CHANNEL                           ));   break;
+    case PICO_INVALID_TRIGGER_CHANNEL                   :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_TRIGGER_CHANNEL                   ));   break;
+    case PICO_INVALID_CONDITION_CHANNEL                 :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_CONDITION_CHANNEL                 ));   break;
+    case PICO_NO_SIGNAL_GENERATOR                       :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NO_SIGNAL_GENERATOR                       ));   break;
+    case PICO_STREAMING_FAILED                          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_STREAMING_FAILED                          ));   break;
+    case PICO_BLOCK_MODE_FAILED                         :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_BLOCK_MODE_FAILED                         ));   break;
+    case PICO_NULL_PARAMETER                            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NULL_PARAMETER                            ));   break;
+    case PICO_ETS_MODE_SET                              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_ETS_MODE_SET                              ));   break;
+    case PICO_DATA_NOT_AVAILABLE                        :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_DATA_NOT_AVAILABLE                        ));   break;
+    case PICO_STRING_BUFFER_TO_SMALL                    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_STRING_BUFFER_TO_SMALL                    ));   break;
+    case PICO_ETS_NOT_SUPPORTED                         :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_ETS_NOT_SUPPORTED                         ));   break;
+    case PICO_AUTO_TRIGGER_TIME_TO_SHORT                :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_AUTO_TRIGGER_TIME_TO_SHORT                ));   break;
+    case PICO_BUFFER_STALL                              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_BUFFER_STALL                              ));   break;
+    case PICO_TOO_MANY_SAMPLES                          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_TOO_MANY_SAMPLES                          ));   break;
+    case PICO_TOO_MANY_SEGMENTS                         :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_TOO_MANY_SEGMENTS                         ));   break;
+    case PICO_PULSE_WIDTH_QUALIFIER                     :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_PULSE_WIDTH_QUALIFIER                     ));   break;
+    case PICO_DELAY                                     :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_DELAY                                     ));   break;
+    case PICO_SOURCE_DETAILS                            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SOURCE_DETAILS                            ));   break;
+    case PICO_CONDITIONS                                :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_CONDITIONS                                ));   break;
+    case PICO_USER_CALLBACK                             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_USER_CALLBACK                             ));   break;
+    case PICO_DEVICE_SAMPLING                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_DEVICE_SAMPLING                           ));   break;
+    case PICO_NO_SAMPLES_AVAILABLE                      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NO_SAMPLES_AVAILABLE                      ));   break;
+    case PICO_SEGMENT_OUT_OF_RANGE                      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SEGMENT_OUT_OF_RANGE                      ));   break;
+    case PICO_BUSY                                      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_BUSY                                      ));   break;
+    case PICO_STARTINDEX_INVALID                        :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_STARTINDEX_INVALID                        ));   break;
+    case PICO_INVALID_INFO                              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_INFO                              ));   break;
+    case PICO_INFO_UNAVAILABLE                          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INFO_UNAVAILABLE                          ));   break;
+    case PICO_INVALID_SAMPLE_INTERVAL                   :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_SAMPLE_INTERVAL                   ));   break;
+    case PICO_TRIGGER_ERROR                             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_TRIGGER_ERROR                             ));   break;
+    case PICO_MEMORY                                    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_MEMORY                                    ));   break;
+    case PICO_SIG_GEN_PARAM                             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIG_GEN_PARAM                             ));   break;
+    case PICO_SHOTS_SWEEPS_WARNING                      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SHOTS_SWEEPS_WARNING                      ));   break;
+    case PICO_SIGGEN_TRIGGER_SOURCE                     :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIGGEN_TRIGGER_SOURCE                     ));   break;
+    case PICO_AUX_OUTPUT_CONFLICT                       :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_AUX_OUTPUT_CONFLICT                       ));   break;
+    case PICO_AUX_OUTPUT_ETS_CONFLICT                   :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_AUX_OUTPUT_ETS_CONFLICT                   ));   break;
+    case PICO_WARNING_EXT_THRESHOLD_CONFLICT            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_WARNING_EXT_THRESHOLD_CONFLICT            ));   break;
+    case PICO_WARNING_AUX_OUTPUT_CONFLICT               :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_WARNING_AUX_OUTPUT_CONFLICT               ));   break;
+    case PICO_SIGGEN_OUTPUT_OVER_VOLTAGE                :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIGGEN_OUTPUT_OVER_VOLTAGE                ));   break;
+    case PICO_DELAY_NULL                                :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_DELAY_NULL                                ));   break;
+    case PICO_INVALID_BUFFER                            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_BUFFER                            ));   break;
+    case PICO_SIGGEN_OFFSET_VOLTAGE                     :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIGGEN_OFFSET_VOLTAGE                     ));   break;
+    case PICO_SIGGEN_PK_TO_PK                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIGGEN_PK_TO_PK                           ));   break;
+    case PICO_CANCELLED                                 :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_CANCELLED                                 ));   break;
+    case PICO_SEGMENT_NOT_USED                          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SEGMENT_NOT_USED                          ));   break;
+    case PICO_INVALID_CALL                              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_CALL                              ));   break;
+    case PICO_GET_VALUES_INTERRUPTED                    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_GET_VALUES_INTERRUPTED                    ));   break;
+    case PICO_NOT_USED                                  :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NOT_USED                                  ));   break;
+    case PICO_INVALID_SAMPLERATIO                       :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_SAMPLERATIO                       ));   break;
+    case PICO_INVALID_STATE                             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_STATE                             ));   break;
+    case PICO_NOT_ENOUGH_SEGMENTS                       :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NOT_ENOUGH_SEGMENTS                       ));   break;
+    case PICO_DRIVER_FUNCTION                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_DRIVER_FUNCTION                           ));   break;
+    case PICO_RESERVED                                  :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_RESERVED                                  ));   break;
+    case PICO_INVALID_COUPLING                          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_COUPLING                          ));   break;
+    case PICO_BUFFERS_NOT_SET                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_BUFFERS_NOT_SET                           ));   break;
+    case PICO_RATIO_MODE_NOT_SUPPORTED                  :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_RATIO_MODE_NOT_SUPPORTED                  ));   break;
+    case PICO_RAPID_NOT_SUPPORT_AGGREGATION             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_RAPID_NOT_SUPPORT_AGGREGATION             ));   break;
+    case PICO_INVALID_TRIGGER_PROPERTY                  :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_TRIGGER_PROPERTY                  ));   break;
+    case PICO_INTERFACE_NOT_CONNECTED                   :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INTERFACE_NOT_CONNECTED                   ));   break;
+    case PICO_RESISTANCE_AND_PROBE_NOT_ALLOWED          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_RESISTANCE_AND_PROBE_NOT_ALLOWED          ));   break;
+    case PICO_POWER_FAILED                              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_POWER_FAILED                              ));   break;
+    case PICO_SIGGEN_WAVEFORM_SETUP_FAILED              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIGGEN_WAVEFORM_SETUP_FAILED              ));   break;
+    case PICO_FPGA_FAIL                                 :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_FPGA_FAIL                                 ));   break;
+    case PICO_POWER_MANAGER                             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_POWER_MANAGER                             ));   break;
+    case PICO_INVALID_ANALOGUE_OFFSET                   :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_ANALOGUE_OFFSET                   ));   break;
+    case PICO_PLL_LOCK_FAILED                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_PLL_LOCK_FAILED                           ));   break;
+    case PICO_ANALOG_BOARD                              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_ANALOG_BOARD                              ));   break;
+    case PICO_CONFIG_FAIL_AWG                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_CONFIG_FAIL_AWG                           ));   break;
+    case PICO_INITIALISE_FPGA                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INITIALISE_FPGA                           ));   break;
+    case PICO_EXTERNAL_FREQUENCY_INVALID                :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_EXTERNAL_FREQUENCY_INVALID                ));   break;
+    case PICO_CLOCK_CHANGE_ERROR                        :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_CLOCK_CHANGE_ERROR                        ));   break;
+    case PICO_TRIGGER_AND_EXTERNAL_CLOCK_CLASH          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_TRIGGER_AND_EXTERNAL_CLOCK_CLASH          ));   break;
+    case PICO_PWQ_AND_EXTERNAL_CLOCK_CLASH              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_PWQ_AND_EXTERNAL_CLOCK_CLASH              ));   break;
+    case PICO_UNABLE_TO_OPEN_SCALING_FILE               :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_UNABLE_TO_OPEN_SCALING_FILE               ));   break;
+    case PICO_MEMORY_CLOCK_FREQUENCY                    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_MEMORY_CLOCK_FREQUENCY                    ));   break;
+    case PICO_I2C_NOT_RESPONDING                        :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_I2C_NOT_RESPONDING                        ));   break;
+    case PICO_NO_CAPTURES_AVAILABLE                     :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NO_CAPTURES_AVAILABLE                     ));   break;
+    case PICO_NOT_USED_IN_THIS_CAPTURE_MODE             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NOT_USED_IN_THIS_CAPTURE_MODE             ));   break;
+    case PICO_GET_DATA_ACTIVE                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_GET_DATA_ACTIVE                           ));   break;
+    case PICO_IP_NETWORKED                              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_IP_NETWORKED                              ));   break;
+    case PICO_INVALID_IP_ADDRESS                        :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_IP_ADDRESS                        ));   break;
+    case PICO_IPSOCKET_FAILED                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_IPSOCKET_FAILED                           ));   break;
+    case PICO_IPSOCKET_TIMEDOUT                         :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_IPSOCKET_TIMEDOUT                         ));   break;
+    case PICO_SETTINGS_FAILED                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SETTINGS_FAILED                           ));   break;
+    case PICO_NETWORK_FAILED                            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NETWORK_FAILED                            ));   break;
+    case PICO_WS2_32_DLL_NOT_LOADED                     :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_WS2_32_DLL_NOT_LOADED                     ));   break;
+    case PICO_INVALID_IP_PORT                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_IP_PORT                           ));   break;
+    case PICO_COUPLING_NOT_SUPPORTED                    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_COUPLING_NOT_SUPPORTED                    ));   break;
+    case PICO_BANDWIDTH_NOT_SUPPORTED                   :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_BANDWIDTH_NOT_SUPPORTED                   ));   break;
+    case PICO_INVALID_BANDWIDTH                         :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_BANDWIDTH                         ));   break;
+    case PICO_AWG_NOT_SUPPORTED                         :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_AWG_NOT_SUPPORTED                         ));   break;
+    case PICO_ETS_NOT_RUNNING                           :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_ETS_NOT_RUNNING                           ));   break;
+    case PICO_SIG_GEN_WHITENOISE_NOT_SUPPORTED          :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIG_GEN_WHITENOISE_NOT_SUPPORTED          ));   break;
+    case PICO_SIG_GEN_WAVETYPE_NOT_SUPPORTED            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIG_GEN_WAVETYPE_NOT_SUPPORTED            ));   break;
+    case PICO_INVALID_DIGITAL_PORT                      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_DIGITAL_PORT                      ));   break;
+    case PICO_INVALID_DIGITAL_CHANNEL                   :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_DIGITAL_CHANNEL                   ));   break;
+    case PICO_INVALID_DIGITAL_TRIGGER_DIRECTION         :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_DIGITAL_TRIGGER_DIRECTION         ));   break;
+    case PICO_SIG_GEN_PRBS_NOT_SUPPORTED                :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIG_GEN_PRBS_NOT_SUPPORTED                ));   break;
+    case PICO_ETS_NOT_AVAILABLE_WITH_LOGIC_CHANNELS     :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_ETS_NOT_AVAILABLE_WITH_LOGIC_CHANNELS     ));   break;
+    case PICO_WARNING_REPEAT_VALUE                      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_WARNING_REPEAT_VALUE                      ));   break;
+    case PICO_POWER_SUPPLY_CONNECTED                    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_POWER_SUPPLY_CONNECTED                    ));   break;
+    case PICO_POWER_SUPPLY_NOT_CONNECTED                :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_POWER_SUPPLY_NOT_CONNECTED                ));   break;
+    case PICO_POWER_SUPPLY_REQUEST_INVALID              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_POWER_SUPPLY_REQUEST_INVALID              ));   break;
+    case PICO_POWER_SUPPLY_UNDERVOLTAGE                 :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_POWER_SUPPLY_UNDERVOLTAGE                 ));   break;
+    case PICO_CAPTURING_DATA                            :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_CAPTURING_DATA                            ));   break;
+    case PICO_USB3_0_DEVICE_NON_USB3_0_PORT             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_USB3_0_DEVICE_NON_USB3_0_PORT             ));   break;
+    case PICO_NOT_SUPPORTED_BY_THIS_DEVICE              :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NOT_SUPPORTED_BY_THIS_DEVICE              ));   break;
+    case PICO_INVALID_DEVICE_RESOLUTION                 :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_DEVICE_RESOLUTION                 ));   break;
+    case PICO_INVALID_NUMBER_CHANNELS_FOR_RESOLUTION    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_NUMBER_CHANNELS_FOR_RESOLUTION    ));   break;
+    case PICO_CHANNEL_DISABLED_DUE_TO_USB_POWERED       :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_CHANNEL_DISABLED_DUE_TO_USB_POWERED       ));   break;
+    case PICO_SIGGEN_DC_VOLTAGE_NOT_CONFIGURABLE        :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIGGEN_DC_VOLTAGE_NOT_CONFIGURABLE        ));   break;
+    case PICO_NO_TRIGGER_ENABLED_FOR_TRIGGER_IN_PRE_TRIG:   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NO_TRIGGER_ENABLED_FOR_TRIGGER_IN_PRE_TRIG));   break;
+    case PICO_TRIGGER_WITHIN_PRE_TRIG_NOT_ARMED         :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_TRIGGER_WITHIN_PRE_TRIG_NOT_ARMED         ));   break;
+    case PICO_TRIGGER_WITHIN_PRE_NOT_ALLOWED_WITH_DELAY :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_TRIGGER_WITHIN_PRE_NOT_ALLOWED_WITH_DELAY ));   break;
+    case PICO_TRIGGER_INDEX_UNAVAILABLE                 :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_TRIGGER_INDEX_UNAVAILABLE                 ));   break;
+    case PICO_AWG_CLOCK_FREQUENCY									      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_AWG_CLOCK_FREQUENCY									     ));   break;
+    case PICO_TOO_MANY_CHANNELS_IN_USE							    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_TOO_MANY_CHANNELS_IN_USE                  ));   break;
+    case PICO_NULL_CONDITIONS											      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_NULL_CONDITIONS											     ));   break;
+    case PICO_DUPLICATE_CONDITION_SOURCE						    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_DUPLICATE_CONDITION_SOURCE						     ));   break;
+    case PICO_INVALID_CONDITION_INFO								    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_CONDITION_INFO								     ));   break;
+    case PICO_SETTINGS_READ_FAILED									    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SETTINGS_READ_FAILED									     ));   break;
+    case PICO_SETTINGS_WRITE_FAILED								      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SETTINGS_WRITE_FAILED								     ));   break;
+    case PICO_ARGUMENT_OUT_OF_RANGE								      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_ARGUMENT_OUT_OF_RANGE								     ));   break;
+    case PICO_HARDWARE_VERSION_NOT_SUPPORTED				    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_HARDWARE_VERSION_NOT_SUPPORTED				     ));   break;
+    case PICO_DIGITAL_HARDWARE_VERSION_NOT_SUPPORTED		:   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_DIGITAL_HARDWARE_VERSION_NOT_SUPPORTED		 ));   break;
+    case PICO_ANALOGUE_HARDWARE_VERSION_NOT_SUPPORTED	  :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_ANALOGUE_HARDWARE_VERSION_NOT_SUPPORTED	 ));   break;
+    case PICO_UNABLE_TO_CONVERT_TO_RESISTANCE			      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_UNABLE_TO_CONVERT_TO_RESISTANCE			     ));   break;
+    case PICO_DUPLICATED_CHANNEL										    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_DUPLICATED_CHANNEL										     ));   break;
+    case PICO_INVALID_RESISTANCE_CONVERSION				      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_RESISTANCE_CONVERSION				     ));   break;
+    case PICO_INVALID_VALUE_IN_MAX_BUFFER					      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_VALUE_IN_MAX_BUFFER					     ));   break;
+    case PICO_INVALID_VALUE_IN_MIN_BUFFER					      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_INVALID_VALUE_IN_MIN_BUFFER					     ));   break;
+    case PICO_SIGGEN_FREQUENCY_OUT_OF_RANGE				      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_SIGGEN_FREQUENCY_OUT_OF_RANGE				     ));   break;
+    case PICO_EEPROM2_CORRUPT											      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_EEPROM2_CORRUPT											     ));   break;
+    case PICO_EEPROM2_FAIL													    :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_EEPROM2_FAIL													     ));   break;
+    case PICO_DEVICE_TIME_STAMP_RESET							      :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_DEVICE_TIME_STAMP_RESET							     ));   break;
+    case PICO_WATCHDOGTIMER                             :   string = NAN_NEW_STRING(GET_VARIABLE_NAME(PICO_WATCHDOGTIMER                             ));   break;
+    default:                                                string = NAN_NEW_STRING("Invalid retcode"                                                 );    break;
+  }
+
+  // Return
+  args.GetReturnValue().Set(string);
+}
+
 void defineConstants(v8::Local<v8::Object> module)
 {
   v8::Isolate* moduleIsolate = module->GetIsolate();
@@ -636,6 +820,8 @@ void defineConstants(v8::Local<v8::Object> module)
     NODE_DEFINE_CONSTANT(retcodes, PICO_WATCHDOGTIMER);
   }
   
+  Nan::SetMethod(retcodes, "toString", retcodeToString);
+
   v8::Local<v8::String> retcode_name = v8::String::NewFromUtf8(moduleIsolate, "PICO_STATUS");
   module->DefineOwnProperty(moduleContext, retcode_name, retcodes, constant_attributes).FromJust();
 }

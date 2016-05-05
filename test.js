@@ -16,26 +16,26 @@ let option = {
 }
 
 picoscope.open((result) => {
-  console.log('open: res: ' + result)
+  console.log('open: res: ' + picoscope.PICO_STATUS.toString(result))
 
-  if (result === 0) {
+  if (result === picoscope.PICO_STATUS.PICO_OK) {
     result = picoscope.setOption(option)
 
-    if (result === 0) {
+    if (result === picoscope.PICO_STATUS.PICO_OK) {
       picoscope.setDigitizer(false, (result) => {
-        console.log('setDigitizer: res: ' + result)
+        console.log('setDigitizer: res: ' + picoscope.PICO_STATUS.toString(result))
 
-        if (result === 0) {
+        if (result === picoscope.PICO_STATUS.PICO_OK) {
           picoscope.doAcquisition(false, (result) => {
-            console.log('doAcquisition: res: ' + result)
+            console.log('doAcquisition: res: ' + picoscope.PICO_STATUS.toString(result))
           }, (result) => {
-            console.log('doAcquisition: finished: ' + result)
+            console.log('doAcquisition: finished: ' + picoscope.PICO_STATUS.toString(result))
 
-            if (result === 0) {
+            if (result === picoscope.PICO_STATUS.PICO_OK) {
               picoscope.fetchData(false, (result, data) => {
-                console.log('fetchData: res: ' + result)
+                console.log('fetchData: res: ' + picoscope.PICO_STATUS.toString(result))
 
-                if (result === 0) {
+                if (result === picoscope.PICO_STATUS.PICO_OK) {
                   console.log(data)
 
                   fs.writeFile("result.bin", data, (error) => {
@@ -45,7 +45,7 @@ picoscope.open((result) => {
                   })
 
                   picoscope.close((result) => {
-                    console.log('close: res: ' + result)
+                    console.log('close: res: ' + picoscope.PICO_STATUS.toString(result))
                   })
                 }
               })
