@@ -84,5 +84,9 @@ picoscope.open((result) => {
         resolve()
       })
     })
+  }).then(function () {
+    console.log('ok')
+  }, function (err) {
+    console.log('fail', err)
   })
 })
