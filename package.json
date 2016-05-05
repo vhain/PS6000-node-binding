@@ -2,7 +2,7 @@
   "name": "node-ps6000",
   "version": "0.1.0",
   "description": "Node binding of PicoScope 6000 series.",
-  "main": "./build/Release/node-ps6000",
+  "main": "./index.js",
   "binary": {
     "module_name": "node-ps6000",
     "module_path": "build/{configuration}/"
@@ -22,6 +22,7 @@
   "homepage": "https://github.com/kukdh1/PS6000-node-binding#readme",
   "dependencies": {
     "co": "^4.6.0",
+    "keymirror": "^0.1.1",
     "nan": "^2.3.3",
     "node-gyp": "^3.3.1"
   }
