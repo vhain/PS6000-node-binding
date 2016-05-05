@@ -9,13 +9,11 @@ PicoScope::PicoScope()
   lfAcquisitionRate = DEFAULT_SAMPLE_RATE;
   lfSampleInterval = DEFAULT_SAMPLE_INTERVAL;
   nSegmentOffset = DEFAULT_NUM_SAMPLE;
-  nChannel = DEFAULT_CHANNEL;
   lfDelayTime = DEFAULT_DELAYTIME;
-  lfFullScale = DEFAULT_VERTICAL_FULLSCALE;
+  nFullScale = DEFAULT_VERTICAL_FULLSCALE;
   lfOffset = DEFAULT_VERTICAL_OFFSET;
   nCoupling = DEFAULT_VERTICAL_COUPLING;
   nBandwidth = DEFAULT_VERTICAL_BANDWIDTH;
-  nUsedChannels = DEFAULT_USED_CHANNEL;
   nTbNextSegmentPad = 0;
   nTimeOut = DEFAULT_TIMEOUT;
   nBufferLength = 0;
@@ -66,7 +64,7 @@ bool PicoScope::isOpen()
   return isOpened;
 }
 
-PICO_STATUS PicoScope::setConfigVertical(double lfFullScale, double lfOffset, int32_t nCoupling, int32_t nBandwidth)
+PICO_STATUS PicoScope::setConfigVertical(PS6000_RANGE nFullScale, double lfOffset, PS6000_COUPLING nCoupling, PS6000_BANDWIDTH_LIMITER nBandwidth)
 {
   if (nBandwidth != PS6000_BW_FULL)
   {
@@ -77,16 +75,11 @@ PICO_STATUS PicoScope::setConfigVertical(double lfFullScale, double lfOffset, in
       nBandwidth = PS6000_BW_25MHZ;
   }
 
-  if (lfFullScale < 0.1 - 1e-6 || lfFullScale > 10.0 + 1e-6)
-  {
-    return 1;
-  }
-
   nCoupling = PS6000_DC_50R;
 
-  this->lfFullScale = lfFullScale;
+  this->nFullScale = nFullScale;
   this->lfOffset = lfOffset;
-  //this->lfOffset = lfFullScale * 7.0 / 16.0;
+  //this->lfOffset = nFullScale * 7.0 / 16.0;
   this->nCoupling = nCoupling;
   this->nBandwidth = nBandwidth;
 
@@ -127,18 +120,6 @@ PICO_STATUS PicoScope::setConfigTrigger(double lfDelayTime)
   }
 
   this->lfDelayTime = lfDelayTime;
-
-  return 0;
-}
-
-PICO_STATUS PicoScope::setConfigChannel(int32_t nChannel)
-{
-  if (nChannel != 1 && nChannel != 2)
-  {
-    return 1;
-  }
-
-  this->nChannel = nChannel;
 
   return 0;
 }
@@ -410,7 +391,7 @@ void PicoScope::setInfo(UNIT *unit)
 
 
           // signal
-          unit->channelSettings[0].range = getVoltageIndex(lfFullScale);      // Voltage setting
+          unit->channelSettings[0].range = nFullScale;      // Voltage setting
           unit->channelSettings[0].DCcoupled = nCoupling;
           unit->channelSettings[0].enabled = true;
 
@@ -436,7 +417,7 @@ void PicoScope::setInfo(UNIT *unit)
           unit->awgBufferSize = NULL;
 
           //signal A,D
-          unit->channelSettings[0].range = getVoltageIndex(lfFullScale);      // Voltage setting
+          unit->channelSettings[0].range = nFullScale;      // Voltage setting
           unit->channelSettings[0].DCcoupled = nCoupling;
           unit->channelSettings[0].enabled = true;
 
@@ -463,7 +444,7 @@ void PicoScope::setInfo(UNIT *unit)
           unit->awgBufferSize = NULL;
 
           // signal
-          unit->channelSettings[0].range = getVoltageIndex(lfFullScale);      // Voltage setting
+          unit->channelSettings[0].range = nFullScale;      // Voltage setting
           unit->channelSettings[0].DCcoupled = nCoupling;
           unit->channelSettings[0].enabled = true;
 
@@ -484,25 +465,6 @@ void PicoScope::setInfo(UNIT *unit)
     // info = 4 - PICO_BATCH_AND_SERIAL
     ps6000GetUnitInfo(unit->handle, unit->serial, sizeof(unit->serial), &r, PICO_BATCH_AND_SERIAL);
   }
-}
-
-int32_t PicoScope::getVoltageIndex(double lfFullScale)
-{
-  if (inRange(0.1, lfFullScale))
-    return PS6000_50MV;
-  else if (inRange(0.2, lfFullScale))
-    return PS6000_100MV;
-  else if (inRange(0.4, lfFullScale))
-    return PS6000_200MV;
-  else if (inRange(1.0, lfFullScale))
-    return PS6000_500MV;
-  else if (inRange(2.0, lfFullScale))
-    return PS6000_1V;
-  else if (inRange(4.0, lfFullScale))
-    return PS6000_2V;
-  else if (inRange(10.0, lfFullScale))
-    return PS6000_5V;
-  return PS6000_500MV;
 }
 
 uint32_t PicoScope::setTrigger(int16_t handle,

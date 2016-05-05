@@ -11,18 +11,15 @@
 #include "picoStatus.h"
 #include "ps6000Api.h"
 
-#define DEFAULT_CHANNEL             1
 #define DEFAULT_NUM_SAMPLE          10000
 #define DEFAULT_NUM_SEGMENT         20
 #define DEFAULT_SAMPLE_RATE         2.0                  // Unit : GHz
 #define DEFAULT_SAMPLE_INTERVAL     (1.0 / (DEFAULT_SAMPLE_RATE * 1e9))  // Unit : Seconds
 #define DEFAULT_DELAYTIME           0.0
-#define DEFAULT_VERTICAL_FULLSCALE  10.0
+#define DEFAULT_VERTICAL_FULLSCALE  PS6000_5V
 #define DEFAULT_VERTICAL_OFFSET     0.0
-#define DEFAULT_VERTICAL_COUPLING   2       // DC, 50 ohm
-#define DEFAULT_VERTICAL_BANDWIDTH  0       // 0 : No bandwidth limit
-                                            // 1 : 25MHz
-#define DEFAULT_USED_CHANNEL        0x00000001  // use channel 1 on a 2-channel digitizer
+#define DEFAULT_VERTICAL_COUPLING   PS6000_DC_50R
+#define DEFAULT_VERTICAL_BANDWIDTH  PS6000_BW_FULL
 #define DEFAULT_TIMEOUT             20000    // 10000 milliseconds
 
 #define SAFE_FREE(ptr)          { if (ptr) { free(ptr); ptr = NULL; } }
@@ -158,10 +155,9 @@ class PicoScope
      */
     PICO_STATUS resetDevice();
 
-    PICO_STATUS setConfigVertical(double lfFullScale, double lfOffset, int32_t nCoupling, int32_t nBandwidth);
+    PICO_STATUS setConfigVertical(PS6000_RANGE nFullScale, double lfOffset, PS6000_COUPLING nCoupling, PS6000_BANDWIDTH_LIMITER nBandwidth);
     PICO_STATUS setConfigHorizontal(double lfSamplerate, int32_t nSamples, int32_t nSegments);
     PICO_STATUS setConfigTrigger(double lfDelayTime);
-    PICO_STATUS setConfigChannel(int32_t nChannel);
 
     /* These functions for helping purpose of MALDI */
     PICO_STATUS setDigitizer(bool bRepeat);
@@ -183,7 +179,6 @@ class PicoScope
   private:
     int32_t nSamples;
     int32_t nSegments;
-    int32_t nChannel;
     double lfAcquisitionRate;
     double lfSampleInterval;
     double lfDelayTime;
@@ -193,11 +188,10 @@ class PicoScope
 
     int32_t nModelNumber;
     UNIT uAllUnit;
-    double lfFullScale;
+    PS6000_RANGE nFullScale;
     double lfOffset;
-    int32_t nCoupling;
-    int32_t nBandwidth;
-    int32_t nUsedChannels;
+    PS6000_COUPLING nCoupling;
+    PS6000_BANDWIDTH_LIMITER nBandwidth;
 
     int32_t nTbNextSegmentPad;
     int32_t nBufferLength;
@@ -211,7 +205,6 @@ class PicoScope
     bool inRange(double lfValueBase, double lfVal2);
     int16_t mvToADC(int16_t mv, int16_t ch);
     void setInfo(UNIT *unit);
-    int32_t getVoltageIndex(double lfFullScale);
     uint32_t setTrigger(int16_t handle,
       PS6000_TRIGGER_CHANNEL_PROPERTIES *ptcpChannelProperties, int16_t nChannelProperties,
       PS6000_TRIGGER_CONDITIONS *ptcTriggerConditions, int16_t nTriggerConditions,

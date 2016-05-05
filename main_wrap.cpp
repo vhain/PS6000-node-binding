@@ -6,10 +6,10 @@
 
 typedef struct _PICOSCOPE_OPTION
 {
-  double lfFullScale;
   double lfOffset;
   double lfSamplerate;
   double lfDelayTime;
+  int32_t nFullScale;
   int32_t nCoupling;
   int32_t nBandwidth;
   int32_t nSamples;
@@ -83,7 +83,7 @@ void openWork(uv_work_t* ptr)
  * @param[in-opt] option: Option of this function
  *
  * {
- *   "verticalScale": lfFullScale,
+ *   "verticalScale": nFullScale,
  *   "verticalOffset": lfOffset,
  *   "verticalCoupling": nCoupling,
  *   "verticalBandwidth": nBandwidth,
@@ -205,23 +205,21 @@ void setOption(const Nan::FunctionCallbackInfo<v8::Value>& args)
 
   // Parse options
   v8::Local<v8::Object> options = args[0]->ToObject();
-  psOption.lfFullScale = Nan::Get(options, Nan::New<v8::String>("verticalScale").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
   psOption.lfOffset = Nan::Get(options, Nan::New<v8::String>("verticalOffset").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
   psOption.lfSamplerate = Nan::Get(options, Nan::New<v8::String>("horizontalSamplerate").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
   psOption.lfDelayTime = Nan::Get(options, Nan::New<v8::String>("triggerDelay").ToLocalChecked()).ToLocalChecked()->ToNumber()->NumberValue();
+  psOption.nFullScale = Nan::Get(options, Nan::New<v8::String>("verticalScale").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
   psOption.nCoupling = Nan::Get(options, Nan::New<v8::String>("verticalCoupling").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
   psOption.nBandwidth = Nan::Get(options, Nan::New<v8::String>("verticalBandwidth").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
   psOption.nSamples = Nan::Get(options, Nan::New<v8::String>("horizontalSamples").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
   psOption.nSegments = Nan::Get(options, Nan::New<v8::String>("horizontalSegments").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
-  psOption.nChannel = Nan::Get(options, Nan::New<v8::String>("channel").ToLocalChecked()).ToLocalChecked()->ToInt32()->Int32Value();
 
   // Apply
   if (ppsMainObject)
   {
-    ppsMainObject->setConfigVertical(psOption.lfFullScale, psOption.lfOffset, psOption.nCoupling, psOption.nBandwidth);
+    ppsMainObject->setConfigVertical((PS6000_RANGE)psOption.nFullScale, psOption.lfOffset, (PS6000_COUPLING)psOption.nCoupling, (PS6000_BANDWIDTH_LIMITER)psOption.nBandwidth);
     ppsMainObject->setConfigHorizontal(psOption.lfSamplerate, psOption.nSamples, psOption.nSegments);
     ppsMainObject->setConfigTrigger(psOption.lfDelayTime);
-    ppsMainObject->setConfigChannel(psOption.nChannel);
 
     psStatus = PICO_OK;
   }
@@ -824,6 +822,46 @@ void defineConstants(v8::Local<v8::Object> module)
 
   v8::Local<v8::String> retcode_name = v8::String::NewFromUtf8(moduleIsolate, "PICO_STATUS");
   module->DefineOwnProperty(moduleContext, retcode_name, retcodes, constant_attributes).FromJust();
+
+  // Add PS6000_RANGE constants
+  v8::Local<v8::Object> ranges = Nan::New<v8::Object>();
+  {
+    NODE_DEFINE_CONSTANT(ranges, PS6000_10MV);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_20MV);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_50MV);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_100MV);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_200MV);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_500MV);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_1V);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_2V);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_5V);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_10V);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_20V);
+    NODE_DEFINE_CONSTANT(ranges, PS6000_50V);
+  }
+
+  v8::Local<v8::String> ranges_name = v8::String::NewFromUtf8(moduleIsolate, "PS6000_RANGE");
+  module->DefineOwnProperty(moduleContext, ranges_name, ranges, constant_attributes).FromJust();
+
+  // Add PS6000_COUPLING constants
+  v8::Local<v8::Object> couplings = Nan::New<v8::Object>();
+  
+  NODE_DEFINE_CONSTANT(couplings, PS6000_AC);
+  NODE_DEFINE_CONSTANT(couplings, PS6000_DC_1M);
+  NODE_DEFINE_CONSTANT(couplings, PS6000_DC_50R);
+
+  v8::Local<v8::String> couplings_name = v8::String::NewFromUtf8(moduleIsolate, "PS6000_COUPLING");
+  module->DefineOwnProperty(moduleContext, couplings_name, couplings, constant_attributes).FromJust();
+
+  // Add PS6000_BANDWIDTH_LIMITER constants
+  v8::Local<v8::Object> bandwidths = Nan::New<v8::Object>();
+
+  NODE_DEFINE_CONSTANT(bandwidths, PS6000_BW_FULL);
+  NODE_DEFINE_CONSTANT(bandwidths, PS6000_BW_20MHZ);
+  NODE_DEFINE_CONSTANT(bandwidths, PS6000_BW_25MHZ);
+
+  v8::Local<v8::String> bandwidths_name = v8::String::NewFromUtf8(moduleIsolate, "PS6000_BANDWIDTH_LIMITER");
+  module->DefineOwnProperty(moduleContext, bandwidths_name, bandwidths, constant_attributes).FromJust();
 }
 
 void Init(v8::Local<v8::Object> module)

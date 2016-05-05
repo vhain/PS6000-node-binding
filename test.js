@@ -4,15 +4,14 @@ const picoscope = require('./build/Release/node-ps6000')
 const fs = require('fs')
 
 let option = {
-  "verticalScale": 4.0,
+  "verticalScale": picoscope.PS6000_RANGE.PS6000_2V,
   "verticalOffset": 0.0,
-  "verticalCoupling": 2,
-  "verticalBandwidth": 0,
+  "verticalCoupling": picoscope.PS6000_COUPLING.PS6000_DC_50R,
+  "verticalBandwidth": picoscope.PS6000_BANDWIDTH_LIMITER.PS6000_BW_FULL,
   "horizontalSamplerate": 0.5,
   "horizontalSamples": 1000,
   "horizontalSegments": 20,
-  "triggerDelay": 0.0,
-  "channel": 1
+  "triggerDelay": 0.0
 }
 
 picoscope.open((result) => {
