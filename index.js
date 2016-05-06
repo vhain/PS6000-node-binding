@@ -1,7 +1,6 @@
 'use strict'
 
 const picoscope = require('./build/release/node-ps6000')
-const keyMirror = require('keyMirror')
 
 const PICO_STATUS = picoscope.PICO_STATUS
 const PS6000_COUPLING = picoscope.PS6000_COUPLING
