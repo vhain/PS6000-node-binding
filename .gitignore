@@ -1,6 +1,5 @@
 /node_modules
-Release/
-Debug/
+build/
 *.sdf
 .vs/
 *.db
@@ -9,4 +8,4 @@ Debug/
 Pipe_inOut
 Pipe_inOutFifo
 *.opendb
-*bin
+*.bin
