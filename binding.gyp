@@ -15,7 +15,8 @@
         {
           "destination": "<(module_root_dir)/build/Release",
           "files": [
-            "<(module_root_dir)/dll/ps6000.dll"
+            "<(module_root_dir)/dll/ps6000.dll",
+            "<(module_root_dir)/dll/PicoIpp.dll"
           ]
         }
       ]
