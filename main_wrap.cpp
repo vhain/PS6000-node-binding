@@ -402,6 +402,8 @@ void fetchDataPost(uv_work_t *ptr)
   // Return callback
   pWork->callback->Call(ret_count, ret);
 
+  // reset pointer
+  ppsMainObject->setData(NULL);
   // Free Work
   delete pWork->callback;
   free(pWork);

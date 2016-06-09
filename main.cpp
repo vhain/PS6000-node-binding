@@ -173,7 +173,10 @@ PICO_STATUS PicoScope::setDigitizer(bool bRepeat)
     psStatus = ps6000SetNoOfCaptures(uAllUnit.handle, nCaptures);
   }
 
-  nBufferLength = nSamples * (nSegments + 1);
+  // why + 1 ?
+//  nBufferLength = nSamples * (nSegments + 1);
+  nBufferLength = nSamples * (nSegments);
+
   pcData = (int8_t *)calloc(nBufferLength, sizeof(int8_t));
 
   if (!bRepeat)
@@ -316,7 +319,7 @@ int32_t PicoScope::getSegmentCount()
 
 void PicoScope::setData(int8_t *pData)
 {
-  SAFE_FREE(pcData);
+  //SAFE_FREE(pcData);
   pcData = pData;
 }
 
