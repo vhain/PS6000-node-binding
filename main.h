@@ -11,6 +11,7 @@
 #include "picoStatus.h"
 #include "ps6000Api.h"
 
+#define MAXIMUM_BUFFER_LENGTH       20971520
 #define DEFAULT_NUM_SAMPLE          10000
 #define DEFAULT_NUM_SEGMENT         20
 #define DEFAULT_SAMPLE_RATE         2.0                  // Unit : GHz
@@ -183,7 +184,7 @@ class PicoScope
     double lfSampleInterval;
     double lfDelayTime;
     int32_t nSegmentOffset;
-    int8_t *pcData;
+    int8_t pcData[MAXIMUM_BUFFER_LENGTH];
     SCOPE_DATA sdDataList;
 
     int32_t nModelNumber;

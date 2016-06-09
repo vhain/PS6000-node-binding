@@ -17,14 +17,17 @@ PicoScope::PicoScope()
   nTbNextSegmentPad = 0;
   nTimeOut = DEFAULT_TIMEOUT;
   nBufferLength = 0;
-  pcData = NULL;
+  // zero initialize pcData
+  for (int32_t i = 0; i < MAXIMUM_BUFFER_LENGTH; i ++)
+  {
+    pcData[i] = 0;
+  }
   nModelNumber = MODEL_PS6402C;
   sdDataList.clear();
 }
 
 PicoScope::~PicoScope()
 {
-  SAFE_FREE(pcData);
 }
 
 PICO_STATUS PicoScope::open()
@@ -132,7 +135,10 @@ PICO_STATUS PicoScope::setDigitizer(bool bRepeat)
   int32_t nCaptures = nSegments;
 
   // Cleanup
-  SAFE_FREE(pcData);
+  for (int32_t i = 0; i < nBufferLength; i ++)
+  {
+    pcData[i] = 0;
+  }
   sdDataList.clear();
 
   // Check parameters
@@ -177,7 +183,11 @@ PICO_STATUS PicoScope::setDigitizer(bool bRepeat)
 //  nBufferLength = nSamples * (nSegments + 1);
   nBufferLength = nSamples * (nSegments);
 
-  pcData = (int8_t *)calloc(nBufferLength, sizeof(int8_t));
+  // zero initialize
+  for (int32_t i = 0; i < nBufferLength; i ++)
+  {
+    pcData[i] = 0;
+  }
 
   if (!bRepeat)
     return psStatus;
@@ -319,8 +329,10 @@ int32_t PicoScope::getSegmentCount()
 
 void PicoScope::setData(int8_t *pData)
 {
-  //SAFE_FREE(pcData);
-  pcData = pData;
+  for (int32_t i = 0; i < nBufferLength; i ++)
+  {
+    pcData[i] = pData == NULL ? 0 : pData[i];
+  }
 }
 
 bool PicoScope::inRange(double lfValueBase, double lfVal2)
