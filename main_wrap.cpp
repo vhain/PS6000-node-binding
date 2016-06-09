@@ -397,7 +397,7 @@ void fetchDataPost(uv_work_t *ptr)
 
   // Insert value
   ret[0] = Nan::New<v8::Int32>(pWork->psStatus);
-  ret[1] = Nan::NewBuffer((char *)pWork->data, pWork->length).ToLocalChecked();
+  ret[1] = Nan::CopyBuffer((char *)pWork->data, pWork->length).ToLocalChecked();
 
   // Return callback
   pWork->callback->Call(ret_count, ret);
