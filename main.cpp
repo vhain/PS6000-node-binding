@@ -135,10 +135,6 @@ PICO_STATUS PicoScope::setDigitizer(bool bRepeat)
   int32_t nCaptures = nSegments;
 
   // Cleanup
-  for (int32_t i = 0; i < nBufferLength; i ++)
-  {
-    pcData[i] = 0;
-  }
   sdDataList.clear();
 
   // Check parameters
@@ -182,12 +178,6 @@ PICO_STATUS PicoScope::setDigitizer(bool bRepeat)
   // why + 1 ?
 //  nBufferLength = nSamples * (nSegments + 1);
   nBufferLength = nSamples * (nSegments);
-
-  // zero initialize
-  for (int32_t i = 0; i < nBufferLength; i ++)
-  {
-    pcData[i] = 0;
-  }
 
   if (!bRepeat)
     return psStatus;
